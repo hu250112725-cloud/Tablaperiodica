@@ -1,0 +1,268 @@
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import type { FormEvent, KeyboardEvent } from 'react';
+import type { ChemicalElement } from '../data/elements';
+import { useGoogleAI } from '../hooks/useGoogleAI';
+
+interface QuimiBotProps {
+  open: boolean;
+  onClose: () => void;
+  elementContext?: ChemicalElement | null;
+  compareContext?: [ChemicalElement, ChemicalElement] | null;
+}
+
+interface UIMessage {
+  id: number;
+  role: 'user' | 'bot';
+  text: string;
+}
+
+let msgCounter = 0;
+
+function renderMarkdownTable(block: string): string {
+  // Keep only complete rows (start AND end with |)
+  const rows = block.trim().split('\n')
+    .map((r) => r.trim())
+    .filter((r) => r.startsWith('|') && r.endsWith('|'));
+  if (rows.length < 2) return block;
+  const [header, , ...body] = rows; // skip separator row (index 1)
+  const cells = (row: string) =>
+    row.split('|').map((c) => c.trim()).filter((_, i, a) => i > 0 && i < a.length - 1);
+  const th = cells(header).map((c) => `<th>${c}</th>`).join('');
+  const trs = body.map((r) => `<tr>${cells(r).map((c) => `<td>${c}</td>`).join('')}</tr>`).join('');
+  return `<table class="qb-table"><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`;
+}
+
+function formatBotText(text: string): string {
+  // Escape HTML entities first
+  let out = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Drop any partial table row at the very end (no closing pipe)
+  out = out.replace(/\n\|[^\n|]*$/m, '');
+
+  // Convert markdown tables before other formatting
+  out = out.replace(/((?:^\|.+\|\n?)+)/gm, (match) => renderMarkdownTable(match));
+
+  return out
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^#{1,3}\s+(.+)$/gm, '<strong style="font-size:1.05em">$1</strong>')
+    .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*?<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/\n/g, '<br/>')
+    .replace(/^(.+)$/, '<p>$1</p>');
+}
+
+const QUICK: Array<{ icon: string; label: string; msg: string }> = [
+  { icon: '⚗️', label: 'Explícame',      msg: 'Explícame las propiedades más importantes y datos curiosos de este elemento' },
+  { icon: '⚖️', label: 'Similitudes',   msg: '¿Con qué elementos es más similar y cuáles son las diferencias clave?' },
+  { icon: '🧪', label: 'Quiz',          msg: 'Dame un ejercicio universitario sobre este elemento o la tabla periódica' },
+  { icon: '🏭', label: 'Industria',     msg: '¿Cuáles son los principales usos industriales y aplicaciones modernas?' },
+];
+
+export function QuimiBot({ open, onClose, elementContext, compareContext }: QuimiBotProps) {
+  const { sendMessage, hasApiKey, loadingStatus } = useGoogleAI();
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<UIMessage[]>([
+    { id: 0, role: 'bot', text: '¡Hola! Soy **QuimiBot** ⚗️ Tu asistente de química universitaria.\nPuedo explicarte cualquier elemento, comparar dos entre sí, o ayudarte con ejercicios. ¿Por dónde empezamos?' },
+  ]);
+  const [loading, setLoading] = useState(false);
+  const endRef = useRef<HTMLDivElement | null>(null);
+  const taRef = useRef<HTMLTextAreaElement | null>(null);
+  // Keep a ref to the latest submit so the auto-compare effect always
+  // calls the current version (avoids stale-closure issues with StrictMode)
+  const submitRef = useRef<((text: string) => Promise<void>) | undefined>(undefined);
+
+  // Build context labels
+  const contextLabel = compareContext
+    ? `${compareContext[0].name} (${compareContext[0].symbol}) vs ${compareContext[1].name} (${compareContext[1].symbol})`
+    : elementContext
+    ? `${elementContext.name} (${elementContext.symbol})`
+    : undefined;
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
+
+  useEffect(() => {
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${Math.min(ta.scrollHeight, 100)}px`;
+  }, [input]);
+
+  // Auto-send comparison query when opened in compare mode
+  // Uses a `cancelled` flag instead of a persistent ref-key so that
+  // React StrictMode's double-invoke doesn't swallow the timeout.
+  useEffect(() => {
+    if (!open || !compareContext) return;
+    const [a, b] = compareContext;
+    const prompt = `Compara ${a.name} (${a.symbol}, nº${a.atomicNumber}) con ${b.name} (${b.symbol}, nº${b.atomicNumber}): diferencias y similitudes en propiedades, reactividad, electronegatividad y usos.`;
+    let cancelled = false;
+    const t = setTimeout(() => {
+      if (!cancelled) submitRef.current?.(prompt);
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [open, compareContext]);
+
+  const addMsg = (role: UIMessage['role'], text: string) => {
+    msgCounter += 1;
+    setMessages((p) => [...p, { id: msgCounter, role, text }]);
+  };
+
+  const submit = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || loading) return;
+    addMsg('user', trimmed);
+    setInput('');
+
+    if (!hasApiKey) {
+      addMsg('bot', 'Para activar QuimiBot, configura **VITE_GOOGLE_API_KEY** en `.env` con tu clave de [Google AI Studio](https://aistudio.google.com/app/apikey).');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await sendMessage(trimmed, contextLabel);
+      addMsg('bot', res);
+    } catch (err) {
+      const msg = (err as Error).message ?? String(err);
+      addMsg('bot', `❌ **Error:** \`${msg}\`\n\n*Si el error es de cuota, espera un momento y vuelve a intentar.*`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Always keep ref in sync so the auto-compare effect uses the latest version
+  submitRef.current = submit;
+
+  const handleSubmit = (e: FormEvent) => { e.preventDefault(); submit(input); };
+  const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(input); } };
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div className="fixed inset-0 z-40 md:hidden"
+            style={{ background: 'rgba(2,8,24,0.6)' }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={onClose} />
+
+          <motion.aside
+            className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[420px] flex-col border-l border-cyan-300/20"
+            style={{ background: 'rgba(4,11,26,0.93)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
+            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+          >
+            {/* Header */}
+            <header className="flex items-center justify-between border-b border-cyan-400/15 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="atom-loader" />
+                <div>
+                  <h2 className="font-orbitron text-base font-bold text-cyan-50">QuimiBot</h2>
+                  <p className="text-[10px] text-cyan-400/70">Google Gemini · Química universitaria</p>
+                </div>
+              </div>
+              <button type="button" onClick={onClose}
+                className="rounded-lg border border-slate-700 bg-slate-900/50 px-2.5 py-1.5 text-xs text-slate-300 transition hover:border-slate-400 hover:text-white">
+                ✕
+              </button>
+            </header>
+
+            {/* Context chip */}
+            {contextLabel && (
+              <div className="border-b border-cyan-400/10 px-4 py-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                    {compareContext ? 'Comparando' : 'Contexto'}
+                  </span>
+                  {compareContext ? (
+                    <>
+                      <span className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/12 px-2.5 py-0.5 text-xs text-fuchsia-200">
+                        ⚗️ {compareContext[0].name} ({compareContext[0].symbol})
+                      </span>
+                      <span className="text-xs text-slate-500">vs</span>
+                      <span className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/12 px-2.5 py-0.5 text-xs text-fuchsia-200">
+                        ⚗️ {compareContext[1].name} ({compareContext[1].symbol})
+                      </span>
+                    </>
+                  ) : (
+                    <span className="rounded-full border border-cyan-400/40 bg-cyan-500/12 px-2.5 py-0.5 text-xs text-cyan-200">
+                      ⚗️ {contextLabel}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Quick actions */}
+            <div className="border-b border-cyan-400/10 px-4 py-2">
+              <div className="flex flex-wrap gap-1.5">
+                {QUICK.map((q) => (
+                  <button key={q.label} type="button" disabled={loading} onClick={() => submit(q.msg)}
+                    className="flex items-center gap-1 rounded-full border border-cyan-400/25 bg-slate-900/50 px-2.5 py-1 text-[11px] text-cyan-100/80 transition hover:border-cyan-300/60 hover:bg-cyan-500/10 hover:text-white disabled:opacity-40">
+                    <span>{q.icon}</span><span>{q.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+              {messages.map((msg) => (
+                <motion.div key={msg.id}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.role === 'bot' && (
+                    <div className="mr-2 mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/10 text-xs">
+                      ⚗️
+                    </div>
+                  )}
+                  <div className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                    msg.role === 'bot'
+                      ? 'bot-message rounded-tl-sm border border-cyan-300/20 bg-slate-900/80 text-slate-100'
+                      : 'rounded-tr-sm bg-gradient-to-br from-blue-600 to-fuchsia-600 text-white'
+                  }`}>
+                    {msg.role === 'bot'
+                      ? <div dangerouslySetInnerHTML={{ __html: formatBotText(msg.text) }} />
+                      : msg.text
+                    }
+                  </div>
+                </motion.div>
+              ))}
+
+              {loading && (
+                <div className="flex items-start gap-2">
+                  <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/10 text-xs">⚗️</div>
+                  <div className="rounded-2xl rounded-tl-sm border border-cyan-300/20 bg-slate-900/80 px-4 py-3 space-y-1.5">
+                    <div className="typing"><span /><span /><span /></div>
+                    <p className="text-[10px] text-cyan-400/60 animate-pulse">{loadingStatus || '💬 Pensando...'}</p>
+                  </div>
+                </div>
+              )}
+              <div ref={endRef} />
+            </div>
+
+            {/* Input */}
+            <form onSubmit={handleSubmit} className="border-t border-cyan-400/15 p-3">
+              <div className="flex items-end gap-2 rounded-xl border border-cyan-400/30 bg-slate-900/60 p-2 transition-all focus-within:border-cyan-300 focus-within:shadow-[0_0_18px_rgba(0,229,255,.2)]">
+                <textarea
+                  ref={taRef} rows={1} value={input}
+                  onChange={(e) => setInput(e.target.value)} onKeyDown={handleKey}
+                  placeholder="Pregunta sobre química... (Enter envía)"
+                  className="flex-1 resize-none bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
+                  style={{ minHeight: 28, maxHeight: 100 }}
+                />
+                <button type="submit" disabled={loading || !input.trim()}
+                  className="flex-shrink-0 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-bold text-slate-950 transition-all hover:bg-cyan-300 disabled:opacity-40 disabled:cursor-not-allowed">
+                  ↑
+                </button>
+              </div>
+              <p className="mt-1.5 text-center text-[10px] text-slate-600">Shift+Enter para nueva línea</p>
+            </form>
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
