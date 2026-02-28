@@ -36,8 +36,8 @@ jobs:
         run: npm run build
         working-directory: app-temp
         env:
-          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
-          VITE_GOOGLE_MODEL: ${{ secrets.VITE_GOOGLE_MODEL }}
+          VITE_GROQ_API_KEY: ${{ secrets.VITE_GROQ_API_KEY }}
+          VITE_GROQ_MODEL: ${{ secrets.VITE_GROQ_MODEL }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
