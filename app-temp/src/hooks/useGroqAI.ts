@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { useCallback, useMemo, useState } from 'react';
 
 const SYSTEM_PROMPT = `
@@ -60,12 +60,13 @@ const MAX_RESPONSE_LINES = 6;
 const MAX_RESPONSE_CHARS = 520;
 const MAX_TABLE_CHARS = 2400;
 
-const DEFAULT_MODEL = 'gemini-2.0-flash';
+const DEFAULT_MODEL = 'llama-3.1-8b-instant';
+const GROQ_BASE_URL = 'https://api.groq.com/openai/v1';
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error) {
-    if (/API key not valid|permission|unauthorized|forbidden/i.test(error.message)) {
-      return 'API key inválida o sin permisos en Google AI Studio.';
+    if (/API key|permission|unauthorized|forbidden|invalid api key/i.test(error.message)) {
+      return 'API key inválida o sin permisos en Groq.';
     }
     if (/quota|429|rate/i.test(error.message)) {
       return 'Límite de cuota alcanzado. Espera un momento e inténtalo de nuevo.';
@@ -73,7 +74,7 @@ function toErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return 'Ocurrió un error inesperado con Google Gemini.';
+  return 'Ocurrió un error inesperado con Groq.';
 }
 
 function trimDanglingConnector(text: string): string {
@@ -108,20 +109,20 @@ function truncateAtSentenceBoundary(text: string, maxChars: number): string {
   return `${trimDanglingConnector(chunk)}…`;
 }
 
-export function useGoogleAI() {
+export function useGroqAI() {
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [loadingStatus, setLoadingStatus] = useState<string>('');
 
-  const apiKey = useMemo(() => (import.meta.env.VITE_GOOGLE_API_KEY ?? '').trim(), []);
+  const apiKey = useMemo(() => (import.meta.env.VITE_GROQ_API_KEY ?? '').trim(), []);
   const modelName = useMemo(() => {
-    const v = (import.meta.env.VITE_GOOGLE_MODEL ?? '').trim();
+    const v = (import.meta.env.VITE_GROQ_MODEL ?? '').trim();
     return v || DEFAULT_MODEL;
   }, []);
 
   const sendMessage = useCallback(
     async (message: string, elementContext?: string) => {
       if (!apiKey) {
-        throw new Error('Falta configurar VITE_GOOGLE_API_KEY.');
+        throw new Error('Falta configurar VITE_GROQ_API_KEY.');
       }
 
       const contextualMessage = elementContext
@@ -133,26 +134,26 @@ export function useGoogleAI() {
         { role: 'user', content: contextualMessage },
       ];
 
-      setLoadingStatus(`💬 Pensando con ${modelName}...`);
+      setLoadingStatus(`💬 Pensando con ${modelName} (Groq)...`);
 
       try {
-        const googleAI = new GoogleGenerativeAI(apiKey);
-        const model = googleAI.getGenerativeModel({
+        const client = new OpenAI({
+          apiKey,
+          baseURL: GROQ_BASE_URL,
+          dangerouslyAllowBrowser: true,
+        });
+
+        const completion = await client.chat.completions.create({
           model: modelName,
-          systemInstruction: SYSTEM_PROMPT,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...messages.map((msg) => ({ role: msg.role, content: msg.content })),
+          ],
+          max_tokens: 900,
+          temperature: 0.35,
         });
 
-        const result = await model.generateContent({
-          contents: messages.map((msg) => ({
-            role: msg.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: msg.content }],
-          })),
-          generationConfig: {
-            maxOutputTokens: 1500,
-          },
-        });
-
-        const rawReply = result.response.text()?.trim() || '(sin respuesta)';
+        const rawReply = completion.choices[0]?.message?.content?.trim() || '(sin respuesta)';
         const reply = makeConciseReply(rawReply);
 
         setHistory((prev) => [

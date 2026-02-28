@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, KeyboardEvent } from 'react';
 import type { ChemicalElement } from '../data/elements';
-import { useGoogleAI } from '../hooks/useGoogleAI';
+import { useGroqAI } from '../hooks/useGroqAI';
 
 interface QuimiBotProps {
   open: boolean;
@@ -70,7 +70,7 @@ function useIsMobile() {
 
 export function QuimiBot({ open, onClose, elementContext, compareContext }: QuimiBotProps) {
   const isMobile = useIsMobile();
-  const { sendMessage, hasApiKey, loadingStatus } = useGoogleAI();
+  const { sendMessage, hasApiKey, loadingStatus } = useGroqAI();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<UIMessage[]>([
     { id: 0, role: 'bot', text: '¡Hola! Soy **QuimiBot** ⚗️ Tu asistente de química universitaria.\nPuedo explicarte cualquier elemento, comparar dos entre sí, o ayudarte con ejercicios. ¿Por dónde empezamos?' },
@@ -124,7 +124,7 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
     setInput('');
 
     if (!hasApiKey) {
-      addMsg('bot', 'Para activar QuimiBot, configura **VITE_GOOGLE_API_KEY** en `.env` con tu clave de [Google AI Studio](https://aistudio.google.com/app/apikey).');
+      addMsg('bot', 'Para activar QuimiBot, configura **VITE_GROQ_API_KEY** en `.env` con tu API key de Groq.');
       return;
     }
     setLoading(true);
@@ -184,7 +184,7 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
                 <div className="atom-loader" />
                 <div>
                   <h2 className="font-orbitron text-base font-bold text-cyan-50">QuimiBot</h2>
-                  <p className="text-[10px] text-cyan-400/70">Google Gemini · Química universitaria</p>
+                  <p className="text-[10px] text-cyan-400/70">Groq · Química universitaria</p>
                 </div>
               </div>
               <button type="button" onClick={onClose}
