@@ -36,6 +36,9 @@ export function PeriodicTable({
   compareSelected,
   onElementClick,
 }: PeriodicTableProps) {
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+  const colSize = isMobile ? 76 : 72;
+  const rowSize = isMobile ? 82 : 78;
   const query = search.toLowerCase().trim();
   const isSearching = query.length > 0;
   const isCategoryFiltering = selectedCategory !== 'all';
@@ -46,13 +49,20 @@ export function PeriodicTable({
   const visibleNums = new Set(elements.map((e) => e.atomicNumber));
 
   return (
-    <div className="overflow-x-auto">
-      <div className="relative" style={{ minWidth: 1310, padding: '10px 10px 16px' }}>
+    <div className={`overflow-x-auto ${isMobile ? 'premium-table-mobile' : ''}`}>
+      <div
+        className={`relative ${isMobile ? 'rounded-2xl border border-cyan-400/20 bg-slate-950/55' : ''}`}
+        style={{
+          minWidth: colSize * 18 + 20,
+          padding: isMobile ? '8px 8px 14px' : '10px 10px 16px',
+          boxShadow: isMobile ? 'inset 0 0 28px rgba(0,229,255,0.06), 0 8px 30px rgba(0,0,0,0.35)' : undefined,
+        }}
+      >
 
         {/* ── Group numbers header ── */}
-        <div className="mb-1 grid" style={{ gridTemplateColumns: 'repeat(18, 72px)', gap: '2px' }}>
+        <div className="mb-1 grid" style={{ gridTemplateColumns: `repeat(18, ${colSize}px)`, gap: '2px' }}>
           {GROUPS.map((g) => (
-            <div key={g} className="text-center font-orbitron text-[9px] text-cyan-200/30 py-1">
+            <div key={g} className={`text-center font-orbitron text-cyan-200/30 py-1 ${isMobile ? 'text-[10px]' : 'text-[9px]'}`}>
               {g}
             </div>
           ))}
@@ -64,8 +74,8 @@ export function PeriodicTable({
             display: 'grid',
             position: 'relative',
             overflow: 'visible',
-            gridTemplateColumns: 'repeat(18, 72px)',
-            gridTemplateRows: 'repeat(7, 78px) 28px repeat(2, 78px)',
+            gridTemplateColumns: `repeat(18, ${colSize}px)`,
+            gridTemplateRows: `repeat(7, ${rowSize}px) ${isMobile ? 30 : 28}px repeat(2, ${rowSize}px)`,
             gap: '2px',
           }}
         >
@@ -73,7 +83,7 @@ export function PeriodicTable({
           {PERIODS.map((p) => (
             <div
               key={`period-${p}`}
-              className="pointer-events-none flex items-center font-orbitron text-[9px] text-cyan-200/30"
+              className={`pointer-events-none flex items-center font-orbitron text-cyan-200/30 ${isMobile ? 'text-[10px]' : 'text-[9px]'}`}
               style={{ gridColumn: 1, gridRow: p, paddingLeft: 2 }}
             >
               {p}
