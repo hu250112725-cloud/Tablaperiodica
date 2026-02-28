@@ -55,7 +55,8 @@ export function FilterBar({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Buscar elemento…"
-            className="w-full rounded-xl border border-white/10 bg-slate-900/70 py-1.5 pl-8 pr-8 text-sm text-slate-100 outline-none transition-all placeholder:text-slate-500 focus:border-cyan-400/60 focus:bg-slate-900 focus:shadow-[0_0_16px_rgba(0,229,255,.18)]"
+            className="w-full rounded-xl border border-white/10 bg-slate-900/70 py-1.5 pl-8 pr-8 text-slate-100 outline-none transition-all placeholder:text-slate-500 focus:border-cyan-400/60 focus:bg-slate-900 focus:shadow-[0_0_16px_rgba(0,229,255,.18)]"
+            style={{ fontSize: 16 }}
           />
           {search && (
             <button

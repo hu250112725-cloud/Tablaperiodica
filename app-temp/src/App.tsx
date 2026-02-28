@@ -205,8 +205,11 @@ function App() {
       <button
         type="button"
         onClick={() => { setQuimiBotContext(null); setQuimiBotOpen(true); }}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-2xl border border-cyan-300/40 bg-cyan-500/15 px-5 py-3 font-orbitron text-sm text-cyan-50 transition-all hover:bg-cyan-500/30"
-        style={{ boxShadow: '0 0 30px rgba(0,229,255,.3), 0 8px 32px rgba(0,0,0,.5)' }}
+        className="fixed right-4 z-40 flex items-center gap-2 rounded-2xl border border-cyan-300/40 bg-cyan-500/15 px-4 py-2.5 font-orbitron text-sm text-cyan-50 transition-all hover:bg-cyan-500/30 sm:right-6 sm:px-5 sm:py-3"
+        style={{
+          bottom: 'max(1.25rem, calc(env(safe-area-inset-bottom) + 0.75rem))',
+          boxShadow: '0 0 30px rgba(0,229,255,.3), 0 8px 32px rgba(0,0,0,.5)',
+        }}
         onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 45px rgba(0,229,255,.55), 0 8px 32px rgba(0,0,0,.5)'; }}
         onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 0 30px rgba(0,229,255,.3), 0 8px 32px rgba(0,0,0,.5)'; }}
       >

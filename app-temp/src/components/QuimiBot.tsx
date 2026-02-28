@@ -63,7 +63,13 @@ const QUICK: Array<{ icon: string; label: string; msg: string }> = [
   { icon: '🏭', label: 'Industria',     msg: '¿Cuáles son los principales usos industriales y aplicaciones modernas?' },
 ];
 
+function useIsMobile() {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(max-width: 639px)').matches;
+}
+
 export function QuimiBot({ open, onClose, elementContext, compareContext }: QuimiBotProps) {
+  const isMobile = useIsMobile();
   const { sendMessage, hasApiKey, loadingStatus } = useGoogleAI();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<UIMessage[]>([
@@ -143,17 +149,35 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
     <AnimatePresence>
       {open && (
         <>
-          <motion.div className="fixed inset-0 z-40 md:hidden"
-            style={{ background: 'rgba(2,8,24,0.6)' }}
+          <motion.div className="fixed inset-0 z-40"
+            style={{ background: 'rgba(2,8,24,0.65)' }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose} />
 
           <motion.aside
-            className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[420px] flex-col border-l border-cyan-300/20"
-            style={{ background: 'rgba(4,11,26,0.93)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+            className={
+              isMobile
+                ? 'fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-2xl border-t border-cyan-300/20'
+                : 'fixed right-0 top-0 z-50 flex h-[100dvh] w-full max-w-[420px] flex-col border-l border-cyan-300/20'
+            }
+            style={{
+              background: 'rgba(4,11,26,0.96)',
+              backdropFilter: 'blur(28px)',
+              WebkitBackdropFilter: 'blur(28px)',
+              ...(isMobile ? { height: '90dvh' } : {}),
+            }}
+            initial={isMobile ? { y: '100%' } : { x: '100%' }}
+            animate={isMobile ? { y: 0 } : { x: 0 }}
+            exit={isMobile ? { y: '100%' } : { x: '100%' }}
+            transition={{ type: 'spring', stiffness: 280, damping: 30 }}
           >
+            {/* Drag handle (mobile only) */}
+            {isMobile && (
+              <div className="flex justify-center pt-2.5 pb-1">
+                <div className="h-1 w-10 rounded-full bg-slate-600/70" />
+              </div>
+            )}
+
             {/* Header */}
             <header className="flex items-center justify-between border-b border-cyan-400/15 px-4 py-3">
               <div className="flex items-center gap-3">
@@ -208,7 +232,7 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
             </div>
 
             {/* Messages */}
-            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
               {messages.map((msg) => (
                 <motion.div key={msg.id}
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
@@ -244,21 +268,24 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSubmit} className="border-t border-cyan-400/15 p-3">
+            <form onSubmit={handleSubmit}
+              className="border-t border-cyan-400/15 p-3"
+              style={{ paddingBottom: isMobile ? 'max(12px, env(safe-area-inset-bottom))' : undefined }}
+            >
               <div className="flex items-end gap-2 rounded-xl border border-cyan-400/30 bg-slate-900/60 p-2 transition-all focus-within:border-cyan-300 focus-within:shadow-[0_0_18px_rgba(0,229,255,.2)]">
                 <textarea
                   ref={taRef} rows={1} value={input}
                   onChange={(e) => setInput(e.target.value)} onKeyDown={handleKey}
-                  placeholder="Pregunta sobre química... (Enter envía)"
-                  className="flex-1 resize-none bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
-                  style={{ minHeight: 28, maxHeight: 100 }}
+                  placeholder="Pregunta sobre química..."
+                  className="flex-1 resize-none bg-transparent text-slate-100 outline-none placeholder:text-slate-500"
+                  style={{ minHeight: 28, maxHeight: 100, fontSize: 16 }}
                 />
                 <button type="submit" disabled={loading || !input.trim()}
                   className="flex-shrink-0 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-bold text-slate-950 transition-all hover:bg-cyan-300 disabled:opacity-40 disabled:cursor-not-allowed">
                   ↑
                 </button>
               </div>
-              <p className="mt-1.5 text-center text-[10px] text-slate-600">Shift+Enter para nueva línea</p>
+              {!isMobile && <p className="mt-1.5 text-center text-[10px] text-slate-600">Shift+Enter para nueva línea</p>}
             </form>
           </motion.aside>
         </>

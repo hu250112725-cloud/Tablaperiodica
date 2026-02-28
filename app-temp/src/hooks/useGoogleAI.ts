@@ -113,7 +113,10 @@ export function useGoogleAI() {
   const [loadingStatus, setLoadingStatus] = useState<string>('');
 
   const apiKey = useMemo(() => (import.meta.env.VITE_GOOGLE_API_KEY ?? '').trim(), []);
-  const modelName = useMemo(() => (import.meta.env.VITE_GOOGLE_MODEL ?? DEFAULT_MODEL).trim(), []);
+  const modelName = useMemo(() => {
+    const v = (import.meta.env.VITE_GOOGLE_MODEL ?? '').trim();
+    return v || DEFAULT_MODEL;
+  }, []);
 
   const sendMessage = useCallback(
     async (message: string, elementContext?: string) => {
