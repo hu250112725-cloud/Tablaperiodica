@@ -75,10 +75,6 @@ export interface ChatMessage {
   content: string;
 }
 
-const MAX_RESPONSE_LINES = 20;
-const MAX_RESPONSE_CHARS = 1800;
-const MAX_TABLE_CHARS = 4000;
-
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 const GROQ_BASE_URL = 'https://api.groq.com/openai/v1';
 
@@ -97,38 +93,6 @@ function toErrorMessage(error: unknown): string {
   }
 
   return 'Ocurrió un error inesperado con Groq.';
-}
-
-function trimDanglingConnector(text: string): string {
-  return text
-    .replace(/\s+(de|del|y|e|o|u|con|para|por|en|a|que)$/i, '')
-    .trim();
-}
-
-function truncateAtSentenceBoundary(text: string, maxChars: number): string {
-  if (text.length <= maxChars) {
-    return trimDanglingConnector(text);
-  }
-
-  const chunk = text.slice(0, maxChars).trimEnd();
-  const lastPunctuation = Math.max(
-    chunk.lastIndexOf('.'),
-    chunk.lastIndexOf('!'),
-    chunk.lastIndexOf('?'),
-    chunk.lastIndexOf(';'),
-    chunk.lastIndexOf(':'),
-  );
-
-  if (lastPunctuation >= Math.floor(maxChars * 0.55)) {
-    return trimDanglingConnector(chunk.slice(0, lastPunctuation + 1));
-  }
-
-  const lastSpace = chunk.lastIndexOf(' ');
-  if (lastSpace > 0) {
-    return `${trimDanglingConnector(chunk.slice(0, lastSpace))}…`;
-  }
-
-  return `${trimDanglingConnector(chunk)}…`;
 }
 
 export function useGroqAI() {
@@ -175,7 +139,7 @@ export function useGroqAI() {
             { role: 'system', content: SYSTEM_PROMPT },
             ...messages.map((msg) => ({ role: msg.role, content: msg.content })),
           ],
-          max_tokens: 1600,
+          max_tokens: 2048,
           temperature: 0.3,
           top_p: 0.9,
         });
@@ -211,8 +175,9 @@ export function useGroqAI() {
 }
 
 function makeConciseReply(text: string): string {
-  // Eliminar frases de apertura vacías que el modelo a veces añade
-  const withoutFiller = text
+  // Solo eliminar frases de apertura vacías que el modelo a veces añade.
+  // NO truncar: el system prompt ya instruye al modelo sobre la longitud.
+  const clean = text
     .replace(/^(¡?(?:buena|excelente|gran)\s+pregunta!?\s*\.?\s*)/i, '')
     .replace(/^(¡?claro!?\s*(?:que\s+sí)?\.?\s*)/i, '')
     .replace(/^(¡?por\s+supuesto!?\s*\.?\s*)/i, '')
@@ -220,25 +185,13 @@ function makeConciseReply(text: string): string {
     .replace(/^(¡?vamos\s+a\s+ver\s*!?\s*\.?\s*)/i, '')
     .trim();
 
-  // Si tiene tabla markdown, no truncar por líneas; solo limitar por chars generosos
-  const hasTable = /^\|.+\|/m.test(withoutFiller);
+  // Para tablas: solo eliminar fila de tabla incompleta al final (sin | de cierre)
+  const hasTable = /^\|.+\|/m.test(clean);
   if (hasTable) {
-    if (withoutFiller.length <= MAX_TABLE_CHARS) {
-      return withoutFiller.replace(/\n\|[^\n]*$/m, (m) =>
-        m.trimEnd().endsWith('|') ? m : '',
-      );
-    }
-    const chunk = withoutFiller.slice(0, MAX_TABLE_CHARS);
-    const lastCompleteRow = chunk.lastIndexOf('|\n');
-    if (lastCompleteRow > 0) return chunk.slice(0, lastCompleteRow + 1);
-    return chunk;
+    return clean.replace(/\n\|[^\n]*$/m, (m) =>
+      m.trimEnd().endsWith('|') ? m : '',
+    );
   }
 
-  // Para respuestas normales: truncar por líneas y luego por chars
-  const lines = withoutFiller
-    .split('\n')
-    .slice(0, MAX_RESPONSE_LINES);
-
-  const compact = lines.join('\n').trimEnd();
-  return truncateAtSentenceBoundary(compact, MAX_RESPONSE_CHARS);
+  return clean;
 }
