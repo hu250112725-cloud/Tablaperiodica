@@ -108,7 +108,7 @@ export function FilterBar({
         <button
           type="button"
           onClick={onToggleCompare}
-          className={`flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium transition-all ${`
+          className={`flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
             compareMode
               ? 'border-white/20 bg-white/10 text-slate-100'
               : 'border-white/[0.07] bg-white/[0.03] text-slate-400 hover:border-white/15 hover:text-slate-200'
