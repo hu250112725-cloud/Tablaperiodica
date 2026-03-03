@@ -10,6 +10,7 @@ interface PeriodicTableProps {
   selectedState: string;
   compareMode: boolean;
   compareSelected: number[];
+  trendMap?: Map<number, number>;
   onElementClick: (element: ChemicalElement) => void;
 }
 
@@ -34,6 +35,7 @@ export function PeriodicTable({
   selectedState,
   compareMode,
   compareSelected,
+  trendMap,
   onElementClick,
 }: PeriodicTableProps) {
   const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
@@ -164,6 +166,7 @@ export function PeriodicTable({
                   onClick={onElementClick}
                   compareMode={compareMode}
                   isCompareSelected={compareSelected.includes(el.atomicNumber)}
+                  trendValue={trendMap?.get(el.atomicNumber)}
                 />
               </div>
             );

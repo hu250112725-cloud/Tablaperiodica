@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { useCallback, useMemo, useState } from 'react';
+import type { ChemicalElement } from '../data/elements';
 
 const SYSTEM_PROMPT = `Eres QuimiBot, asistente universitario de química. Español siempre. Sin frases de relleno. Directo al punto.
 
@@ -47,6 +48,27 @@ function toErrorMessage(error: unknown): string {
   return 'Ocurrió un error inesperado con Groq.';
 }
 
+/** Builds a concise JSON context block from a ChemicalElement */
+function buildElementContext(el: ChemicalElement): string {
+  const data = {
+    nombre: el.name,
+    símbolo: el.symbol,
+    Z: el.atomicNumber,
+    masa: el.atomicMass,
+    grupo: el.group,
+    período: el.period,
+    categoría: el.category,
+    estado_std: el.state,
+    electroneg: el.electronegativity,
+    PF_K: el.meltingPoint,
+    PE_K: el.boilingPoint,
+    conf_electrónica: el.electronConfiguration,
+    descubierto_por: el.discoveredBy,
+    año: el.yearDiscovered,
+  };
+  return JSON.stringify(data);
+}
+
 export function useGroqAI() {
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [loadingStatus, setLoadingStatus] = useState<string>('');
@@ -58,15 +80,23 @@ export function useGroqAI() {
   }, []);
 
   const sendMessage = useCallback(
-    async (message: string, elementContext?: string) => {
+    async (
+      message: string,
+      elementContext?: string,
+      onChunk?: (accumulated: string) => void,
+      elementData?: ChemicalElement | null,
+    ) => {
       if (!apiKey) {
         throw new Error('Falta configurar VITE_GROQ_API_KEY.');
       }
 
-      // Enriquecer el contexto con el nombre del elemento para que el modelo tenga base
-      const contextualMessage = elementContext
-        ? `[El usuario está consultando: ${elementContext}]\n${message}`
-        : message;
+      // Enriquecer el contexto: si tenemos el objeto completo, inyectamos los datos reales
+      let contextualMessage = message;
+      if (elementData) {
+        contextualMessage = `[Datos del elemento consultado: ${buildElementContext(elementData)}]\n${message}`;
+      } else if (elementContext) {
+        contextualMessage = `[El usuario está consultando: ${elementContext}]\n${message}`;
+      }
 
       // Capamos el historial a los últimos MAX_HISTORY_TURNS turnos (= mensajes user+assistant)
       const cappedHistory = history.slice(-MAX_HISTORY_TURNS * 2);
@@ -85,7 +115,7 @@ export function useGroqAI() {
           dangerouslyAllowBrowser: true,
         });
 
-        const completion = await client.chat.completions.create({
+        const stream = await client.chat.completions.create({
           model: modelName,
           messages: [
             { role: 'system', content: SYSTEM_PROMPT },
@@ -94,17 +124,29 @@ export function useGroqAI() {
           max_tokens: 4096,
           temperature: 0.3,
           top_p: 0.9,
+          stream: true,
         });
 
-        const choice = completion.choices[0];
-        let rawReply = choice?.message?.content?.trim() || '(sin respuesta)';
+        let accumulated = '';
+        let hitLength = false;
 
-        // Si el modelo paró porque alcanzó el límite de tokens, avisamos
-        if (choice?.finish_reason === 'length') {
-          rawReply += '\n\n*(Respuesta cortada por límite de tokens. Escribe "continúa" para seguir.)*';
+        for await (const chunk of stream) {
+          const delta = chunk.choices[0]?.delta?.content ?? '';
+          if (delta) {
+            accumulated += delta;
+            onChunk?.(accumulated);
+          }
+          if (chunk.choices[0]?.finish_reason === 'length') {
+            hitLength = true;
+          }
         }
 
-        const reply = makeConciseReply(rawReply);
+        if (hitLength) {
+          accumulated += '\n\n*(Respuesta cortada por límite de tokens. Escribe "continúa" para seguir.)*';
+          onChunk?.(accumulated);
+        }
+
+        const reply = makeConciseReply(accumulated) || '(sin respuesta)';
 
         setHistory((prev) => [
           ...prev.slice(-MAX_HISTORY_TURNS * 2),

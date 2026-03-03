@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ElementModal } from './components/ElementModal';
 import { FilterBar } from './components/FilterBar';
+import type { TrendKey } from './components/FilterBar';
 import { Particles } from './components/Particles';
 import { PeriodicTable } from './components/PeriodicTable';
 import { QuimiBot } from './components/QuimiBot';
@@ -18,6 +19,25 @@ function App() {
   const [quimiBotOpen, setQuimiBotOpen] = useState(false);
   const [quimiBotContext, setQuimiBotContext] = useState<ChemicalElement | null>(null);
   const [quimiBotCompareContext, setQuimiBotCompareContext] = useState<[ChemicalElement, ChemicalElement] | null>(null);
+  const [selectedTrend, setSelectedTrend] = useState<TrendKey>('none');
+
+  // Normalize trend values 0–1 across all elements (unknown/zero excluded from range)
+  const trendMap = useMemo<Map<number, number> | undefined>(() => {
+    if (selectedTrend === 'none') return undefined;
+    const values = elements
+      .map((el) => el[selectedTrend] as number)
+      .filter((v) => v > 0);
+    if (!values.length) return undefined;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    const map = new Map<number, number>();
+    elements.forEach((el) => {
+      const v = el[selectedTrend] as number;
+      if (v > 0) map.set(el.atomicNumber, (v - min) / range);
+    });
+    return map;
+  }, [selectedTrend]);
 
   const filteredElements = useMemo(() => {
     return elements.filter((el) => {
@@ -75,10 +95,12 @@ function App() {
           selectedCategory={selectedCategory}
           selectedState={selectedState}
           compareMode={compareMode}
+          selectedTrend={selectedTrend}
           onSearchChange={setSearch}
           onCategoryChange={setSelectedCategory}
           onStateChange={setSelectedState}
           onToggleCompare={() => { setCompareMode((p) => !p); setCompareSelected([]); }}
+          onTrendChange={setSelectedTrend}
         />
 
         {/* ── Compare panel ────────────────── */}
@@ -167,6 +189,7 @@ function App() {
             selectedState={selectedState}
             compareMode={compareMode}
             compareSelected={compareSelected}
+            trendMap={trendMap}
             onElementClick={handleElementClick}
           />
         </section>

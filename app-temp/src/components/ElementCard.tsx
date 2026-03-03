@@ -8,6 +8,7 @@ interface ElementCardProps {
   dimmed: boolean;
   isCompareSelected: boolean;
   compareMode: boolean;
+  trendValue?: number; // normalized 0-1 for trend overlay
   onClick: (element: ChemicalElement) => void;
 }
 
@@ -22,14 +23,26 @@ export function ElementCard({
   onClick,
   compareMode,
   isCompareSelected,
+  trendValue,
 }: ElementCardProps) {
   const color = categoryColors[element.category];
   const isTouchDevice = typeof window !== 'undefined'
     && window.matchMedia('(hover: none), (pointer: coarse)').matches;
-  const delay = Math.min(element.atomicNumber * 0.006, 0.45);
+  const delay = Math.min(element.atomicNumber * 0.007, 0.5);
   const defaultShadow = highlighted
     ? `0 0 0 2px rgba(165,180,252,0.7), 0 0 14px rgba(129,140,248,0.3)`
     : `0 2px 8px rgba(0,0,0,0.4)`;
+
+  // Compute trend overlay color: cool blue (low) → warm orange (high)
+  const trendOverlay = trendValue !== undefined
+    ? (() => {
+        const t = trendValue; // 0-1
+        const r = Math.round(30 + t * 220);
+        const g = Math.round(120 - t * 70);
+        const b = Math.round(200 - t * 170);
+        return `rgba(${r},${g},${b},0.28)`;
+      })()
+    : null;
 
   return (
     <motion.button
@@ -57,6 +70,14 @@ export function ElementCard({
       type="button"
       aria-label={`Abrir ${element.name}`}
     >
+      {/* Trend overlay */}
+      {trendOverlay && (
+        <div
+          className="pointer-events-none absolute inset-0 rounded-lg z-0 transition-colors duration-500"
+          style={{ background: trendOverlay }}
+        />
+      )}
+
       {/* Top left: atomic number */}
       <div className={`absolute left-[5px] top-[3px] font-orbitron opacity-50 ${isTouchDevice ? 'text-[10px]' : 'text-[9px]'}`}
         style={{ color }}>

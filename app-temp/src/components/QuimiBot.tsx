@@ -4,6 +4,8 @@ import type { FormEvent, KeyboardEvent } from 'react';
 import type { ChemicalElement } from '../data/elements';
 import { useGroqAI } from '../hooks/useGroqAI';
 
+const INITIAL_MSG = { id: 0, role: 'bot' as const, text: 'Soy **QuimiBot**, tu asistente de química universitaria.\nPuedo explicar elementos con valores exactos, comparar propiedades con tablas, resolver ejercicios paso a paso (estequiometría, redox, equilibrio) y mucho más.\n¿Qué necesitas?' };
+
 interface QuimiBotProps {
   open: boolean;
   onClose: () => void;
@@ -70,16 +72,13 @@ function useIsMobile() {
 
 export function QuimiBot({ open, onClose, elementContext, compareContext }: QuimiBotProps) {
   const isMobile = useIsMobile();
-  const { sendMessage, hasApiKey, loadingStatus } = useGroqAI();
+  const { sendMessage, clearHistory, hasApiKey, loadingStatus } = useGroqAI();
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<UIMessage[]>([
-    { id: 0, role: 'bot', text: 'Soy **QuimiBot**, tu asistente de química universitaria.\nPuedo explicar elementos con valores exactos, comparar propiedades con tablas, resolver ejercicios paso a paso (estequiometría, redox, equilibrio) y mucho más.\n¿Qué necesitas?' },
-  ]);
+  const [messages, setMessages] = useState<UIMessage[]>([INITIAL_MSG]);
   const [loading, setLoading] = useState(false);
+  const [streamingId, setStreamingId] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
-  // Keep a ref to the latest submit so the auto-compare effect always
-  // calls the current version (avoids stale-closure issues with StrictMode)
   const submitRef = useRef<((text: string) => Promise<void>) | undefined>(undefined);
 
   // Build context labels
@@ -99,8 +98,6 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
   }, [input]);
 
   // Auto-send comparison query when opened in compare mode
-  // Uses a `cancelled` flag instead of a persistent ref-key so that
-  // React StrictMode's double-invoke doesn't swallow the timeout.
   useEffect(() => {
     if (!open || !compareContext) return;
     const [a, b] = compareContext;
@@ -117,6 +114,15 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
     setMessages((p) => [...p, { id: msgCounter, role, text }]);
   };
 
+  const handleReset = () => {
+    clearHistory();
+    msgCounter = 0;
+    setMessages([INITIAL_MSG]);
+    setInput('');
+    setLoading(false);
+    setStreamingId(null);
+  };
+
   const submit = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
@@ -127,19 +133,44 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
       addMsg('bot', 'Para activar QuimiBot, configura **VITE_GROQ_API_KEY** en `.env` con tu API key de Groq.');
       return;
     }
+
+    // Create the bot streaming placeholder
+    msgCounter += 1;
+    const botId = msgCounter;
+    setMessages((p) => [...p, { id: botId, role: 'bot', text: '' }]);
+    setStreamingId(botId);
     setLoading(true);
+
     try {
-      const res = await sendMessage(trimmed, contextLabel);
-      addMsg('bot', res);
+      const finalReply = await sendMessage(
+        trimmed,
+        contextLabel,
+        (accumulated) => {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === botId ? { ...m, text: accumulated } : m)),
+          );
+        },
+        elementContext ?? null,
+      );
+      // Apply final processed text (makeConciseReply applied inside hook)
+      setMessages((prev) =>
+        prev.map((m) => (m.id === botId ? { ...m, text: finalReply } : m)),
+      );
     } catch (err) {
       const msg = (err as Error).message ?? String(err);
-      addMsg('bot', `❌ **Error:** \`${msg}\`\n\n*Si el error es de cuota, espera un momento y vuelve a intentar.*`);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === botId
+            ? { ...m, text: `❌ **Error:** \`${msg}\`\n\n*Si el error es de cuota, espera un momento y vuelve a intentar.*` }
+            : m,
+        ),
+      );
     } finally {
       setLoading(false);
+      setStreamingId(null);
     }
   };
 
-  // Always keep ref in sync so the auto-compare effect uses the latest version
   submitRef.current = submit;
 
   const handleSubmit = (e: FormEvent) => { e.preventDefault(); submit(input); };
@@ -187,10 +218,16 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
                   <p className="text-[10px] text-slate-600">Groq · Química universitaria</p>
                 </div>
               </div>
-              <button type="button" onClick={onClose}
-                className="rounded-lg border border-white/[0.07] bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-400 transition hover:border-white/15 hover:text-white">
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={handleReset} title="Reiniciar conversación"
+                  className="rounded-lg border border-white/[0.07] bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-500 transition hover:border-white/15 hover:text-slate-300">
+                  ↺
+                </button>
+                <button type="button" onClick={onClose}
+                  className="rounded-lg border border-white/[0.07] bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-400 transition hover:border-white/15 hover:text-white">
+                  ✕
+                </button>
+              </div>
             </header>
 
             {/* Context chip */}
@@ -233,37 +270,43 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
 
             {/* Messages */}
             <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-              {messages.map((msg) => (
-                <motion.div key={msg.id}
-                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  {msg.role === 'bot' && (
-                    <div className="mr-2 mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-xs">
-                      ⚗️
+              {messages.map((msg) => {
+                const isStreaming = msg.role === 'bot' && msg.id === streamingId;
+                return (
+                  <motion.div key={msg.id}
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.role === 'bot' && (
+                      <div className="mr-2 mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-xs">
+                        ⚗️
+                      </div>
+                    )}
+                    <div className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                      msg.role === 'bot'
+                        ? 'bot-message rounded-tl-sm border border-white/[0.07] bg-white/[0.05] text-slate-200'
+                        : 'rounded-tr-sm border border-white/10 bg-white/[0.08] text-slate-100'
+                    }`}>
+                      {msg.role === 'bot' ? (
+                        msg.text === '' && isStreaming ? (
+                          <div className="space-y-1.5">
+                            <div className="typing"><span /><span /><span /></div>
+                            <p className="text-[10px] text-slate-600 animate-pulse">{loadingStatus || 'Pensando...'}</p>
+                          </div>
+                        ) : (
+                          <>
+                            <div dangerouslySetInnerHTML={{ __html: formatBotText(msg.text) }} />
+                            {isStreaming && (
+                              <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse rounded-sm bg-slate-400/60 align-middle" />
+                            )}
+                          </>
+                        )
+                      ) : (
+                        msg.text
+                      )}
                     </div>
-                  )}
-                  <div className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                    msg.role === 'bot'
-                      ? 'bot-message rounded-tl-sm border border-white/[0.07] bg-white/[0.05] text-slate-200'
-                      : 'rounded-tr-sm border border-white/10 bg-white/[0.08] text-slate-100'
-                  }`}>
-                    {msg.role === 'bot'
-                      ? <div dangerouslySetInnerHTML={{ __html: formatBotText(msg.text) }} />
-                      : msg.text
-                    }
-                  </div>
-                </motion.div>
-              ))}
-
-              {loading && (
-                <div className="flex items-start gap-2">
-                  <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-xs">⚗️</div>
-                  <div className="rounded-2xl rounded-tl-sm border border-white/[0.07] bg-white/[0.05] px-4 py-3 space-y-1.5">
-                    <div className="typing"><span /><span /><span /></div>
-                    <p className="text-[10px] text-slate-600 animate-pulse">{loadingStatus || 'Pensando...'}</p>
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                );
+              })}
               <div ref={endRef} />
             </div>
 
