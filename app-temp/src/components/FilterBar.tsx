@@ -36,8 +36,8 @@ export function FilterBar({
 
   return (
     <div
-      className="sticky top-0 z-40 space-y-2 rounded-2xl border border-white/10 bg-slate-950/85 px-4 py-2.5 backdrop-blur-2xl"
-      style={{ boxShadow: '0 4px 32px rgba(0,0,0,0.5)' }}
+      className="sticky top-0 z-40 space-y-2 rounded-xl border border-white/[0.07] bg-[rgba(10,9,20,0.85)] px-4 py-2.5 backdrop-blur-2xl"
+      style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.45)' }}
     >
       {/* ── Row 1: search · states · compare ── */}
       <div className="flex flex-wrap items-center gap-2">
@@ -55,7 +55,7 @@ export function FilterBar({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Buscar elemento…"
-            className="w-full rounded-xl border border-white/10 bg-slate-900/70 py-1.5 pl-8 pr-8 text-slate-100 outline-none transition-all placeholder:text-slate-500 focus:border-cyan-400/60 focus:bg-slate-900 focus:shadow-[0_0_16px_rgba(0,229,255,.18)]"
+            className="w-full rounded-lg border border-white/[0.07] bg-white/[0.04] py-1.5 pl-8 pr-8 text-slate-200 outline-none transition-all placeholder:text-slate-600 focus:border-white/20 focus:bg-white/[0.06]"
             style={{ fontSize: 16 }}
           />
           {search && (
@@ -70,7 +70,7 @@ export function FilterBar({
         </div>
 
         {/* State pills */}
-        <div className="flex items-center gap-0.5 rounded-xl border border-white/10 bg-slate-900/50 p-0.5">
+        <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5">
           {stateOptions.map((opt) => {
             const active = selectedState === opt.value;
             return (
@@ -78,10 +78,10 @@ export function FilterBar({
                 key={opt.value}
                 type="button"
                 onClick={() => onStateChange(opt.value)}
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all ${
+                className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
                   active
-                    ? 'bg-cyan-500/25 text-cyan-100 shadow-[inset_0_0_12px_rgba(0,229,255,.12)]'
-                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                    ? 'bg-white/10 text-slate-100'
+                    : 'text-slate-500 hover:bg-white/[0.04] hover:text-slate-300'
                 }`}
               >
                 {opt.label}
@@ -94,15 +94,15 @@ export function FilterBar({
         <button
           type="button"
           onClick={onToggleCompare}
-          className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold font-orbitron transition-all ${
+          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
             compareMode
-              ? 'border-fuchsia-400/70 bg-fuchsia-500/20 text-fuchsia-200 shadow-[0_0_18px_rgba(224,64,251,.25)]'
-              : 'border-white/10 bg-slate-900/50 text-slate-300 hover:border-fuchsia-400/50 hover:text-fuchsia-200'
+              ? 'border-white/20 bg-white/10 text-slate-100'
+              : 'border-white/[0.07] bg-white/[0.03] text-slate-400 hover:border-white/15 hover:text-slate-200'
           }`}
         >
           {compareMode ? '⊗' : '⊕'} Comparar
           {compareMode && (
-            <span className="rounded-full bg-fuchsia-400/30 px-1.5 py-0.5 text-[9px] text-fuchsia-200">ON</span>
+            <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] text-slate-300">ON</span>
           )}
         </button>
       </div>
@@ -114,8 +114,8 @@ export function FilterBar({
           onClick={() => onCategoryChange('all')}
           className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all ${
             selectedCategory === 'all'
-              ? 'border-cyan-400/60 bg-cyan-500/20 text-cyan-100 shadow-[0_0_10px_rgba(0,229,255,.2)]'
-              : 'border-white/10 bg-slate-900/40 text-slate-400 hover:border-white/25 hover:text-slate-200'
+              ? 'border-white/20 bg-white/10 text-slate-100'
+              : 'border-white/[0.06] bg-transparent text-slate-500 hover:border-white/15 hover:text-slate-300'
           }`}
         >
           Todas
@@ -131,10 +131,9 @@ export function FilterBar({
               onClick={() => onCategoryChange(active ? 'all' : key)}
               className="flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all"
               style={{
-                borderColor: active ? color : `${color}40`,
-                background: active ? `${color}25` : `${color}08`,
-                color: active ? '#fff' : `${color}cc`,
-                boxShadow: active ? `0 0 12px ${color}50` : 'none',
+                borderColor: active ? `${color}55` : `${color}22`,
+                background: active ? `${color}15` : 'transparent',
+                color: active ? '#e2e8f0' : `${color}90`,
               }}
             >
               <span

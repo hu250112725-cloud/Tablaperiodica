@@ -129,8 +129,8 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
           onClick={onClose}
         >
           <motion.div
-            className="relative w-full max-w-3xl overflow-hidden rounded-2xl glass text-slate-100"
-            style={{ border: `1px solid ${categoryColors[element.category]}55`, boxShadow: `0 0 60px ${categoryColors[element.category]}22, 0 30px 80px rgba(0,0,0,.7)`, maxHeight: '92vh' }}
+            className="relative w-full max-w-3xl overflow-hidden rounded-2xl text-slate-100"
+            style={{ background: 'rgba(12,11,22,0.97)', border: `1px solid ${categoryColors[element.category]}30`, boxShadow: `0 0 40px ${categoryColors[element.category]}10, 0 30px 80px rgba(0,0,0,.8)`, maxHeight: '92vh' }}
             initial={{ y: 60, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 60, opacity: 0, scale: 0.95 }}
@@ -145,25 +145,24 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
 
             <div className="relative overflow-y-auto" style={{ maxHeight: '92vh' }}>
               {/* Header */}
-              <div className="relative px-5 pt-5 pb-4"
-                style={{ background: `linear-gradient(135deg, ${categoryColors[element.category]}12 0%, transparent 60%)` }}>
+              <div className="relative px-5 pt-5 pb-4 border-b border-white/[0.06]">
                 <button type="button" onClick={onClose}
-                  className="absolute right-4 top-4 rounded-full border border-slate-600 bg-slate-900/60 px-3 py-1 text-xs text-slate-300 hover:text-white transition">
-                  ✕ Cerrar
+                  className="absolute right-4 top-4 rounded-lg border border-white/[0.07] bg-white/[0.04] px-3 py-1 text-xs text-slate-400 hover:text-white transition">
+                  ✕
                 </button>
                 <div className="flex items-start gap-4">
-                  <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl border font-orbitron text-3xl font-black"
-                    style={{ borderColor: categoryColors[element.category], background: `${categoryColors[element.category]}18`, color: categoryColors[element.category], boxShadow: `0 0 22px ${categoryColors[element.category]}55` }}>
+                  <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl border font-orbitron text-2xl font-medium"
+                    style={{ borderColor: `${categoryColors[element.category]}35`, background: `${categoryColors[element.category]}10`, color: categoryColors[element.category] }}>
                     {element.atomicNumber}
                   </div>
                   <div>
-                    <h2 className="font-orbitron text-2xl font-bold text-white md:text-3xl">{element.name}</h2>
-                    <p className="mt-0.5 text-sm text-slate-300">
-                      <span className="font-orbitron text-base" style={{ color: categoryColors[element.category] }}>{element.symbol}</span>
-                      {' · '}Masa atómica: <strong className="text-white">{element.atomicMass.toFixed(4)}</strong>
+                    <h2 className="text-2xl font-semibold text-white md:text-3xl">{element.name}</h2>
+                    <p className="mt-0.5 text-sm text-slate-400">
+                      <span className="font-orbitron text-base font-medium" style={{ color: categoryColors[element.category] }}>{element.symbol}</span>
+                      {' · '}Masa: <strong className="text-slate-200 font-medium">{element.atomicMass.toFixed(4)}</strong>
                     </p>
                     <span className="mt-1.5 inline-flex rounded-full border px-2.5 py-0.5 text-xs"
-                      style={{ borderColor: `${categoryColors[element.category]}60`, color: categoryColors[element.category], background: `${categoryColors[element.category]}18` }}>
+                      style={{ borderColor: `${categoryColors[element.category]}30`, color: `${categoryColors[element.category]}cc`, background: `${categoryColors[element.category]}0d` }}>
                       {categoryLabels[element.category]}
                     </span>
                   </div>
@@ -174,18 +173,17 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
               <div className="grid gap-4 px-5 pb-5 md:grid-cols-[260px_1fr]">
                 {/* Image + Bohr */}
                 <div className="flex flex-col gap-3">
-                  <div className="overflow-hidden rounded-xl border" style={{ borderColor: `${categoryColors[element.category]}40` }}>
+                  <div className="overflow-hidden rounded-xl border border-white/[0.07]">
                     <img
                       src={imgError ? `https://images-of-elements.com/s/${element.name.toLowerCase()}.jpg` : element.imageUrl}
                       alt={element.name}
                       onError={() => setImgError(true)}
                       className="h-[160px] w-full object-cover"
-                      style={{ background: '#050f23' }}
+                      style={{ background: '#09090f' }}
                     />
                   </div>
-                  <div className="rounded-xl border p-3"
-                    style={{ borderColor: `${categoryColors[element.category]}30`, background: `${categoryColors[element.category]}08` }}>
-                    <p className="mb-2 text-center font-orbitron text-[10px] uppercase tracking-widest text-slate-500">
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+                    <p className="mb-2 text-center text-[10px] uppercase tracking-widest text-slate-600">
                       Modelo de Bohr
                     </p>
                     <BohrModel element={element} />
@@ -199,10 +197,9 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
                       <button key={tab} type="button" onClick={() => setActiveTab(tab)}
                         className="rounded-full border px-3 py-1 text-xs transition-all"
                         style={{
-                          borderColor: activeTab === tab ? categoryColors[element.category] : 'rgba(255,255,255,.1)',
-                          color: activeTab === tab ? '#fff' : '#94a3b8',
-                          background: activeTab === tab ? `${categoryColors[element.category]}28` : 'transparent',
-                          boxShadow: activeTab === tab ? `0 0 12px ${categoryColors[element.category]}44` : 'none',
+                          borderColor: activeTab === tab ? `${categoryColors[element.category]}55` : 'rgba(255,255,255,.07)',
+                          color: activeTab === tab ? '#e2e8f0' : '#64748b',
+                          background: activeTab === tab ? `${categoryColors[element.category]}12` : 'transparent',
                         }}>
                         {tab}
                       </button>
@@ -223,19 +220,19 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
                               { label: 'Estado',  value: STATE_ES[element.state] ?? element.state },
                               { label: 'Electroneg.', value: element.electronegativity || '–' },
                             ] as const).map(({ label, value }) => (
-                              <div key={label} className="flex items-center justify-between gap-2 rounded-lg border border-slate-700/50 bg-slate-900/40 px-3 py-1.5">
-                                <span className="text-slate-400">{label}</span>
-                                <span className="font-orbitron text-xs text-slate-100">{String(value)}</span>
+                              <div key={label} className="flex items-center justify-between gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5">
+                                <span className="text-slate-500">{label}</span>
+                                <span className="font-orbitron text-xs text-slate-200">{String(value)}</span>
                               </div>
                             ))}
                           </div>
-                          <div className="space-y-3 rounded-xl border border-slate-700/40 bg-slate-900/30 p-3">
+                          <div className="space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                             <PropBar label="Punto de fusión"      value={element.meltingPoint}      max={5800} unit="K" color={categoryColors[element.category]} />
                             <PropBar label="Punto de ebullición"  value={element.boilingPoint}      max={5800} unit="K" color={categoryColors[element.category]} />
                             <PropBar label="Electronegatividad"   value={element.electronegativity} max={4.0}  unit=""  color={categoryColors[element.category]} />
                           </div>
-                          <div className="rounded-xl border border-slate-700/40 bg-slate-900/30 px-3 py-2 text-xs text-slate-300">
-                            <span className="text-slate-500">Conf. electrónica: </span>
+                          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-xs text-slate-400">
+                            <span className="text-slate-600">Conf. electrónica: </span>
                             <code className="font-mono" style={{ color: categoryColors[element.category] }}>{element.electronConfiguration}</code>
                           </div>
                         </div>
@@ -244,18 +241,18 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
                       {activeTab === 'Historia' && (
                         <div className="space-y-3">
                           <div className="flex gap-3">
-                            <div className="flex-1 rounded-xl border border-slate-700/40 bg-slate-900/30 p-3 text-sm">
-                              <p className="mb-0.5 text-slate-400">Descubierto por</p>
-                              <p className="font-semibold text-white">{element.discoveredBy}</p>
+                            <div className="flex-1 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-sm">
+                              <p className="mb-0.5 text-slate-500">Descubierto por</p>
+                              <p className="font-medium text-white">{element.discoveredBy}</p>
                             </div>
-                            <div className="w-28 rounded-xl border border-slate-700/40 bg-slate-900/30 p-3 text-center text-sm">
-                              <p className="mb-0.5 text-slate-400">Año</p>
-                              <p className="font-orbitron text-lg font-bold" style={{ color: categoryColors[element.category] }}>
+                            <div className="w-28 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center text-sm">
+                              <p className="mb-0.5 text-slate-500">Año</p>
+                              <p className="font-orbitron text-lg font-medium" style={{ color: categoryColors[element.category] }}>
                                 {element.yearDiscovered > 0 ? element.yearDiscovered : '—'}
                               </p>
                             </div>
                           </div>
-                          <div className="rounded-xl border border-slate-700/40 bg-slate-900/30 p-3 text-sm leading-relaxed text-slate-300">
+                          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-sm leading-relaxed text-slate-400">
                             {element.description}
                           </div>
                         </div>
@@ -264,8 +261,8 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
                       {activeTab === 'Usos' && (
                         <ul className="space-y-2">
                           {element.uses.map((use, i) => (
-                            <li key={i} className="flex gap-2 rounded-xl border border-slate-700/40 bg-slate-900/30 p-3 text-sm text-slate-300">
-                              <span style={{ color: categoryColors[element.category] }} className="flex-shrink-0 font-orbitron">→</span>
+                            <li key={i} className="flex gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-sm text-slate-400">
+                              <span style={{ color: categoryColors[element.category] }} className="flex-shrink-0 font-orbitron opacity-60">→</span>
                               <span>{use}</span>
                             </li>
                           ))}
@@ -282,8 +279,8 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
                               ? `Con electronegatividad de ${element.electronegativity} (Pauling), ${element.electronegativity > 3 ? 'atrae fuertemente los electrones en los enlaces' : element.electronegativity > 2 ? 'tiene tendencia moderada a atraer electrones' : 'suele ceder electrones en reacciones'}.`
                               : `Su electronegatividad no está bien documentada, común en metales de transición y elementos sintéticos.`,
                           ].map((fact, i) => (
-                            <div key={i} className="flex gap-2 rounded-xl border border-slate-700/40 bg-slate-900/30 p-3 text-slate-300">
-                              <span className="text-base" style={{ color: categoryColors[element.category] }}>◆</span>
+                            <div key={i} className="flex gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-slate-400">
+                              <span className="text-base opacity-40" style={{ color: categoryColors[element.category] }}>◆</span>
                               <span>{fact}</span>
                             </div>
                           ))}
@@ -295,14 +292,11 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
               </div>
 
               {/* Footer */}
-              <div className="border-t border-slate-700/50 px-5 py-3">
+              <div className="border-t border-white/[0.06] px-5 py-3">
                 <button type="button" onClick={() => onAskQuimibot(element)}
-                  className="flex w-full items-center justify-center gap-3 rounded-xl border py-2.5 text-sm font-semibold transition-all"
-                  style={{ borderColor: categoryColors[element.category], color: categoryColors[element.category], background: `${categoryColors[element.category]}15` }}
-                  onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `0 0 24px ${categoryColors[element.category]}55`; e.currentTarget.style.background = `${categoryColors[element.category]}28`; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.background = `${categoryColors[element.category]}15`; }}>
-                  <div className="atom-loader" style={{ width: 18, height: 18 }} />
-                  Preguntarle a QuimiBot sobre {element.name}
+                  className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.04] py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white">
+                  <div className="atom-loader" style={{ width: 16, height: 16 }} />
+                  Preguntar a QuimiBot sobre {element.name}
                 </button>
               </div>
             </div>

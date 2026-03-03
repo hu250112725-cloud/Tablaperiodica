@@ -46,51 +46,27 @@ function App() {
   const isFiltering = search.trim().length > 0 || selectedCategory !== 'all' || selectedState !== 'all';
 
   return (
-    <div className="relative min-h-screen overflow-hidden" style={{ background: '#020818' }}>
+    <div className="relative min-h-screen overflow-hidden" style={{ background: '#08080f' }}>
       <Particles />
 
       <div className="relative mx-auto w-full max-w-[1500px] px-3 py-4 md:px-6 md:py-6">
 
         {/* ── Header ──────────────────────────── */}
-        <header className="mb-4 overflow-hidden rounded-2xl border border-cyan-400/20 glass">
-          <div
-            className="relative px-5 py-4 md:px-8 md:py-5"
-            style={{ background: 'linear-gradient(135deg, rgba(0,180,255,0.1) 0%, rgba(224,64,251,0.07) 60%, transparent 100%)' }}
-          >
-            <div
-              className="pointer-events-none absolute inset-0 opacity-10"
-              style={{
-                backgroundImage: `linear-gradient(rgba(0,229,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,.4) 1px, transparent 1px)`,
-                backgroundSize: '48px 48px',
-              }}
-            />
-            <div className="relative flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h1 className="font-orbitron text-2xl font-black leading-tight text-white md:text-3xl"
-                  style={{ textShadow: '0 0 18px rgba(0,229,255,.7), 0 0 40px rgba(0,229,255,.35)' }}>
-                  Tabla Periódica{' '}
-                  <span
-                    className="font-orbitron text-xl font-bold md:text-2xl"
-                    style={{ background: 'linear-gradient(90deg, #00e5ff, #e040fb)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-                  >
-                    Interactiva
-                  </span>
-                </h1>
-                <p className="mt-1 text-xs text-slate-500">
-                  118 elementos · QuimiBot IA
-                </p>
-              </div>
-
-              {isFiltering && (
-                <div className="rounded-xl border px-3 py-1.5 text-center"
-                  style={{ borderColor: '#76ff0340', background: '#76ff030f' }}>
-                  <div className="font-orbitron text-lg font-bold"
-                    style={{ color: '#76ff03', textShadow: '0 0 12px #76ff0388' }}>{filteredElements.length}</div>
-                  <div className="font-orbitron text-[8px] uppercase tracking-wider text-slate-400">filtrados</div>
-                </div>
-              )}
-            </div>
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-4 px-1 py-3">
+          <div>
+            <h1 className="font-orbitron text-xl font-medium tracking-tight text-white md:text-2xl">
+              Tabla Periódica{' '}
+              <span className="font-light text-slate-400">Interactiva</span>
+            </h1>
+            <p className="mt-0.5 text-xs text-slate-600">118 elementos · QuimiBot IA</p>
           </div>
+
+          {isFiltering && (
+            <div className="rounded-lg border border-white/8 bg-white/[0.03] px-3 py-1.5 text-center">
+              <div className="font-orbitron text-base font-medium text-slate-200">{filteredElements.length}</div>
+              <div className="text-[9px] uppercase tracking-widest text-slate-500">filtrados</div>
+            </div>
+          )}
         </header>
 
         {/* ── Filters ──────────────────────── */}
@@ -107,12 +83,12 @@ function App() {
 
         {/* ── Compare panel ────────────────── */}
         {compareMode && (
-          <div className="mt-4 rounded-2xl border border-fuchsia-400/25 glass p-4">
+          <div className="mt-4 rounded-xl border border-white/8 glass p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-orbitron text-sm text-fuchsia-200">
-                ⊕ Modo Comparar
-                <span className="ml-2 font-sans text-xs font-normal text-slate-400">
-                  Haz clic en 2 elementos para comparar
+              <h2 className="text-sm font-medium text-slate-300">
+                Modo Comparar
+                <span className="ml-2 text-xs font-normal text-slate-500">
+                  Selecciona 2 elementos
                 </span>
               </h2>
               {compareSelected.length > 0 && (
@@ -132,18 +108,17 @@ function App() {
                 {compareElements.map((el) => {
                   const color = categoryColors[el.category];
                   return (
-                    <div key={el.atomicNumber} className="relative overflow-hidden rounded-xl border p-4"
-                      style={{ borderColor: `${color}50`, background: `${color}0a` }}>
-                      <div className="pointer-events-none absolute right-2 top-2 font-orbitron text-5xl font-black opacity-10"
+                    <div key={el.atomicNumber} className="relative overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+                      <div className="pointer-events-none absolute right-2 top-2 font-orbitron text-5xl font-medium opacity-[0.05]"
                         style={{ color }}>{el.symbol}</div>
                       <div className="mb-3 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg font-orbitron text-xl font-black"
-                          style={{ background: `${color}22`, color, border: `1px solid ${color}60`, boxShadow: `0 0 12px ${color}44` }}>
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg font-orbitron text-xl font-medium"
+                          style={{ background: `${color}10`, color, border: `1px solid ${color}30` }}>
                           {el.symbol}
                         </div>
                         <div>
-                          <p className="font-orbitron text-sm font-bold text-white">{el.name}</p>
-                          <p className="text-xs text-slate-400">#{el.atomicNumber}</p>
+                          <p className="text-sm font-medium text-white">{el.name}</p>
+                          <p className="text-xs text-slate-500">#{el.atomicNumber}</p>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
@@ -156,8 +131,8 @@ function App() {
                           { label: 'Estado',            value: ({ solid: 'Sólido', liquid: 'Líquido', gas: 'Gas', unknown: 'Desconocido' } as Record<string,string>)[el.state] ?? el.state },
                         ] as const).map(({ label, value }) => (
                           <div key={label} className="flex flex-col">
-                            <span className="text-slate-500">{label}</span>
-                            <span className="font-semibold text-slate-200">{String(value)}</span>
+                            <span className="text-slate-600">{label}</span>
+                            <span className="font-medium text-slate-300">{String(value)}</span>
                           </div>
                         ))}
                       </div>
@@ -172,7 +147,7 @@ function App() {
                         setQuimiBotCompareContext([compareElements[0], compareElements[1]]);
                         setQuimiBotOpen(true);
                       }}
-                      className="rounded-xl border border-fuchsia-400/50 bg-fuchsia-500/10 px-5 py-2 text-sm text-fuchsia-100 transition hover:bg-fuchsia-500/20">
+                      className="rounded-xl border border-white/10 bg-white/[0.04] px-5 py-2 text-sm text-slate-300 transition hover:bg-white/[0.07] hover:text-white">
                       ⚗️ Comparar con QuimiBot
                     </button>
                   </div>
@@ -183,7 +158,7 @@ function App() {
         )}
 
         {/* ── Periodic Table ───────────────── */}
-        <section className="mt-4 rounded-2xl border border-cyan-500/10 glass p-3 md:p-5">
+        <section className="mt-4 rounded-xl border border-white/[0.06] glass p-3 md:p-5">
           <PeriodicTable
             elements={filteredElements}
             allElements={elements}
@@ -196,7 +171,7 @@ function App() {
           />
         </section>
 
-        <footer className="mt-4 pb-2 text-center font-orbitron text-[10px] uppercase tracking-widest text-slate-700">
+        <footer className="mt-4 pb-2 text-center text-[10px] uppercase tracking-[0.18em] text-slate-700">
           Tabla Periódica Interactiva · QuimiBot IA
         </footer>
       </div>
@@ -205,15 +180,13 @@ function App() {
       <button
         type="button"
         onClick={() => { setQuimiBotContext(null); setQuimiBotOpen(true); }}
-        className="fixed right-4 z-40 flex items-center gap-2 rounded-2xl border border-cyan-300/40 bg-cyan-500/15 px-4 py-2.5 font-orbitron text-sm text-cyan-50 transition-all hover:bg-cyan-500/30 sm:right-6 sm:px-5 sm:py-3"
+        className="fixed right-4 z-40 flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-slate-300 backdrop-blur-xl transition-all hover:bg-white/[0.09] hover:text-white sm:right-6"
         style={{
           bottom: 'max(1.25rem, calc(env(safe-area-inset-bottom) + 0.75rem))',
-          boxShadow: '0 0 30px rgba(0,229,255,.3), 0 8px 32px rgba(0,0,0,.5)',
+          boxShadow: '0 8px 32px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,0.05)',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 45px rgba(0,229,255,.55), 0 8px 32px rgba(0,0,0,.5)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 0 30px rgba(0,229,255,.3), 0 8px 32px rgba(0,0,0,.5)'; }}
       >
-        <div className="atom-loader" style={{ width: 20, height: 20 }} />
+        <div className="atom-loader" style={{ width: 18, height: 18 }} />
         QuimiBot
       </button>
 

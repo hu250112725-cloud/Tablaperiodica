@@ -157,13 +157,13 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
           <motion.aside
             className={
               isMobile
-                ? 'fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-2xl border-t border-cyan-300/20'
-                : 'fixed right-0 top-0 z-50 flex h-[100dvh] w-full max-w-[420px] flex-col border-l border-cyan-300/20'
+                ? 'fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-2xl border-t border-white/[0.08]'
+                : 'fixed right-0 top-0 z-50 flex h-[100dvh] w-full max-w-[420px] flex-col border-l border-white/[0.07]'
             }
             style={{
-              background: 'rgba(4,11,26,0.96)',
-              backdropFilter: 'blur(28px)',
-              WebkitBackdropFilter: 'blur(28px)',
+              background: 'rgba(10, 9, 20, 0.97)',
+              backdropFilter: 'blur(32px)',
+              WebkitBackdropFilter: 'blur(32px)',
               ...(isMobile ? { height: '90dvh' } : {}),
             }}
             initial={isMobile ? { y: '100%' } : { x: '100%' }}
@@ -179,40 +179,40 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
             )}
 
             {/* Header */}
-            <header className="flex items-center justify-between border-b border-cyan-400/15 px-4 py-3">
+            <header className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
               <div className="flex items-center gap-3">
                 <div className="atom-loader" />
                 <div>
-                  <h2 className="font-orbitron text-base font-bold text-cyan-50">QuimiBot</h2>
-                  <p className="text-[10px] text-cyan-400/70">Groq · Química universitaria</p>
+                  <h2 className="font-orbitron text-sm font-medium text-slate-200">QuimiBot</h2>
+                  <p className="text-[10px] text-slate-600">Groq · Química universitaria</p>
                 </div>
               </div>
               <button type="button" onClick={onClose}
-                className="rounded-lg border border-slate-700 bg-slate-900/50 px-2.5 py-1.5 text-xs text-slate-300 transition hover:border-slate-400 hover:text-white">
+                className="rounded-lg border border-white/[0.07] bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-400 transition hover:border-white/15 hover:text-white">
                 ✕
               </button>
             </header>
 
             {/* Context chip */}
             {contextLabel && (
-              <div className="border-b border-cyan-400/10 px-4 py-2">
+              <div className="border-b border-white/[0.05] px-4 py-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-600">
                     {compareContext ? 'Comparando' : 'Contexto'}
                   </span>
                   {compareContext ? (
                     <>
-                      <span className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/12 px-2.5 py-0.5 text-xs text-fuchsia-200">
-                        ⚗️ {compareContext[0].name} ({compareContext[0].symbol})
+                      <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-xs text-slate-300">
+                        {compareContext[0].name} ({compareContext[0].symbol})
                       </span>
-                      <span className="text-xs text-slate-500">vs</span>
-                      <span className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/12 px-2.5 py-0.5 text-xs text-fuchsia-200">
-                        ⚗️ {compareContext[1].name} ({compareContext[1].symbol})
+                      <span className="text-xs text-slate-600">vs</span>
+                      <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-xs text-slate-300">
+                        {compareContext[1].name} ({compareContext[1].symbol})
                       </span>
                     </>
                   ) : (
-                    <span className="rounded-full border border-cyan-400/40 bg-cyan-500/12 px-2.5 py-0.5 text-xs text-cyan-200">
-                      ⚗️ {contextLabel}
+                    <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-xs text-slate-300">
+                      {contextLabel}
                     </span>
                   )}
                 </div>
@@ -220,11 +220,11 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
             )}
 
             {/* Quick actions */}
-            <div className="border-b border-cyan-400/10 px-4 py-2">
+            <div className="border-b border-white/[0.05] px-4 py-2">
               <div className="flex flex-wrap gap-1.5">
                 {QUICK.map((q) => (
                   <button key={q.label} type="button" disabled={loading} onClick={() => submit(q.msg)}
-                    className="flex items-center gap-1 rounded-full border border-cyan-400/25 bg-slate-900/50 px-2.5 py-1 text-[11px] text-cyan-100/80 transition hover:border-cyan-300/60 hover:bg-cyan-500/10 hover:text-white disabled:opacity-40">
+                    className="flex items-center gap-1 rounded-full border border-white/[0.07] bg-white/[0.03] px-2.5 py-1 text-[11px] text-slate-400 transition hover:border-white/15 hover:bg-white/[0.06] hover:text-slate-200 disabled:opacity-30">
                     <span>{q.icon}</span><span>{q.label}</span>
                   </button>
                 ))}
@@ -238,14 +238,14 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {msg.role === 'bot' && (
-                    <div className="mr-2 mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/10 text-xs">
+                    <div className="mr-2 mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-xs">
                       ⚗️
                     </div>
                   )}
                   <div className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                     msg.role === 'bot'
-                      ? 'bot-message rounded-tl-sm border border-cyan-300/20 bg-slate-900/80 text-slate-100'
-                      : 'rounded-tr-sm bg-gradient-to-br from-blue-600 to-fuchsia-600 text-white'
+                      ? 'bot-message rounded-tl-sm border border-white/[0.07] bg-white/[0.05] text-slate-200'
+                      : 'rounded-tr-sm border border-white/10 bg-white/[0.08] text-slate-100'
                   }`}>
                     {msg.role === 'bot'
                       ? <div dangerouslySetInnerHTML={{ __html: formatBotText(msg.text) }} />
@@ -257,10 +257,10 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
 
               {loading && (
                 <div className="flex items-start gap-2">
-                  <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/10 text-xs">⚗️</div>
-                  <div className="rounded-2xl rounded-tl-sm border border-cyan-300/20 bg-slate-900/80 px-4 py-3 space-y-1.5">
+                  <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-xs">⚗️</div>
+                  <div className="rounded-2xl rounded-tl-sm border border-white/[0.07] bg-white/[0.05] px-4 py-3 space-y-1.5">
                     <div className="typing"><span /><span /><span /></div>
-                    <p className="text-[10px] text-cyan-400/60 animate-pulse">{loadingStatus || '💬 Pensando...'}</p>
+                    <p className="text-[10px] text-slate-600 animate-pulse">{loadingStatus || 'Pensando...'}</p>
                   </div>
                 </div>
               )}
@@ -269,23 +269,23 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
 
             {/* Input */}
             <form onSubmit={handleSubmit}
-              className="border-t border-cyan-400/15 p-3"
+              className="border-t border-white/[0.07] p-3"
               style={{ paddingBottom: isMobile ? 'max(12px, env(safe-area-inset-bottom))' : undefined }}
             >
-              <div className="flex items-end gap-2 rounded-xl border border-cyan-400/30 bg-slate-900/60 p-2 transition-all focus-within:border-cyan-300 focus-within:shadow-[0_0_18px_rgba(0,229,255,.2)]">
+              <div className="flex items-end gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] p-2 transition-all focus-within:border-white/20">
                 <textarea
                   ref={taRef} rows={1} value={input}
                   onChange={(e) => setInput(e.target.value)} onKeyDown={handleKey}
                   placeholder="Pregunta sobre química..."
-                  className="flex-1 resize-none bg-transparent text-slate-100 outline-none placeholder:text-slate-500"
+                  className="flex-1 resize-none bg-transparent text-slate-200 outline-none placeholder:text-slate-600"
                   style={{ minHeight: 28, maxHeight: 100, fontSize: 16 }}
                 />
                 <button type="submit" disabled={loading || !input.trim()}
-                  className="flex-shrink-0 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-bold text-slate-950 transition-all hover:bg-cyan-300 disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="flex-shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-all hover:bg-white/15 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
                   ↑
                 </button>
               </div>
-              {!isMobile && <p className="mt-1.5 text-center text-[10px] text-slate-600">Shift+Enter para nueva línea</p>}
+              {!isMobile && <p className="mt-1.5 text-center text-[10px] text-slate-700">Shift+Enter para nueva línea</p>}
             </form>
           </motion.aside>
         </>

@@ -26,12 +26,12 @@ export function Particles() {
     resize();
     window.addEventListener('resize', resize);
 
-    const particles: Particle[] = Array.from({ length: 70 }).map(() => ({
+    const particles: Particle[] = Array.from({ length: 28 }).map(() => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.25,
-      vy: (Math.random() - 0.5) * 0.25,
-      radius: Math.random() * 2.2 + 0.8,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: (Math.random() - 0.5) * 0.15,
+      radius: Math.random() * 1.2 + 0.4,
     }));
 
     let frameId = 0;
@@ -48,7 +48,7 @@ export function Particles() {
 
         context.beginPath();
         context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        context.fillStyle = 'rgba(0, 229, 255, 0.65)';
+        context.fillStyle = 'rgba(148, 163, 184, 0.2)';
         context.fill();
       }
 
@@ -58,12 +58,12 @@ export function Particles() {
           const dy = particles[i].y - particles[j].y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          if (distance < 140) {
+          if (distance < 100) {
             context.beginPath();
             context.moveTo(particles[i].x, particles[i].y);
             context.lineTo(particles[j].x, particles[j].y);
-            context.strokeStyle = `rgba(0, 180, 255, ${0.28 - distance / 600})`;
-            context.lineWidth = 1;
+            context.strokeStyle = `rgba(148, 163, 184, ${0.07 - distance / 1800})`;
+            context.lineWidth = 0.5;
             context.stroke();
           }
         }
