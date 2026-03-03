@@ -171,7 +171,9 @@ body {
 .bot-message em     { color: #c4b5fd; font-style: italic; }
 .bot-message code   { background: rgba(129,140,248,.12); border-radius: 4px; padding: 1px 5px; font-family: 'DM Mono', monospace; font-size: 0.87em; color: #c7d2fe; }
 .bot-message p      { margin: 0 0 6px 0; }
-.bot-message ul, .bot-message ol { margin: 0 0 6px 16px; }
+.bot-message ul, .bot-message ol { margin: 4px 0 8px 20px; }
+.bot-message ul { list-style-type: disc; }
+.bot-message ol { list-style-type: decimal; }
 .bot-message li     { margin-bottom: 2px; }
 .bot-message .qb-table { width: 100%; border-collapse: collapse; font-size: 0.8em; margin: 6px 0; }
 .bot-message .qb-table th { background: rgba(129,140,248,.1); color: #a5b4fc; font-weight: 600; text-align: left; padding: 5px 8px; border: 1px solid rgba(255,255,255,.07); white-space: nowrap; }

@@ -36,26 +36,64 @@ function renderMarkdownTable(block: string): string {
 }
 
 function formatBotText(text: string): string {
-  // Escape HTML entities first
+  // 1. Escape HTML entities
   let out = text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 
-  // Drop any partial table row at the very end (no closing pipe)
+  // 2. Drop partial table row at end
   out = out.replace(/\n\|[^\n|]*$/m, '');
 
-  // Convert markdown tables before other formatting
+  // 3. Convert markdown tables first
   out = out.replace(/((?:^\|.+\|\n?)+)/gm, (match) => renderMarkdownTable(match));
 
-  return out
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/^#{1,3}\s+(.+)$/gm, '<strong style="font-size:1.05em">$1</strong>')
-    .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*?<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
-    .replace(/\n{2,}/g, '</p><p>')
-    .replace(/\n/g, '<br/>')
-    .replace(/^(.+)$/, '<p>$1</p>');
+  // 4. Split into lines and process each
+  const lines = out.split('\n');
+  const result: string[] = [];
+  let inUl = false;
+  let inOl = false;
+
+  for (const raw of lines) {
+    const line = raw
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+?)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/^#{1,3}\s+(.+)$/, '<strong class="block text-slate-100 mt-1 mb-0.5" style="font-size:1.05em">$1</strong>');
+
+    // Unordered list item
+    const ulMatch = line.match(/^[-•]\s+(.+)$/);
+    if (ulMatch) {
+      if (!inUl) { result.push('<ul>'); inUl = true; }
+      if (inOl)  { result.push('</ol>'); inOl = false; }
+      result.push(`<li>${ulMatch[1]}</li>`);
+      continue;
+    }
+
+    // Ordered list item
+    const olMatch = line.match(/^(\d+)\.\s+(.+)$/);
+    if (olMatch) {
+      if (!inOl) { result.push('<ol>'); inOl = true; }
+      if (inUl)  { result.push('</ul>'); inUl = false; }
+      result.push(`<li>${olMatch[2]}</li>`);
+      continue;
+    }
+
+    // Close any open lists
+    if (inUl) { result.push('</ul>'); inUl = false; }
+    if (inOl) { result.push('</ol>'); inOl = false; }
+
+    if (line.trim() === '') {
+      result.push('<div class="mb-2"></div>');
+    } else {
+      result.push(`<p>${line}</p>`);
+    }
+  }
+
+  if (inUl) result.push('</ul>');
+  if (inOl) result.push('</ol>');
+
+  return result.join('');
 }
 
 const QUICK: Array<{ icon: string; label: string; msg: string }> = [
