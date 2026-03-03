@@ -57,10 +57,10 @@ function formatBotText(text: string): string {
 }
 
 const QUICK: Array<{ icon: string; label: string; msg: string }> = [
-  { icon: '⚗️', label: 'Explícame',      msg: 'Explícame las propiedades más importantes y datos curiosos de este elemento' },
-  { icon: '⚖️', label: 'Similitudes',   msg: '¿Con qué elementos es más similar y cuáles son las diferencias clave?' },
-  { icon: '🧪', label: 'Quiz',          msg: 'Dame un ejercicio universitario sobre este elemento o la tabla periódica' },
-  { icon: '🏭', label: 'Industria',     msg: '¿Cuáles son los principales usos industriales y aplicaciones modernas?' },
+  { icon: '⚗️', label: 'Propiedades',  msg: 'Dame las propiedades físicas y químicas completas: PF, PE, densidad, electronegatividad, radio atómico, energía de ionización, estados de oxidación y configuración electrónica.' },
+  { icon: '🔍', label: 'Similares',    msg: '¿Con cuáles elementos es más similar atendiendo a grupo, electronegatividad y reactividad? Usa una tabla comparativa.' },
+  { icon: '🧪', label: 'Ejercicio',    msg: 'Plantea y resuelve paso a paso un problema universitario real sobre este elemento: puede ser de estequiometría, enlace, equilibrio o redox.' },
+  { icon: '🏭', label: 'Aplicaciones', msg: '¿Cuáles son sus 3 aplicaciones industriales y tecnológicas más relevantes hoy en día? Incluye el proceso químico involucrado.' },
 ];
 
 function useIsMobile() {
@@ -73,7 +73,7 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
   const { sendMessage, hasApiKey, loadingStatus } = useGroqAI();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<UIMessage[]>([
-    { id: 0, role: 'bot', text: '¡Hola! Soy **QuimiBot** ⚗️ Tu asistente de química universitaria.\nPuedo explicarte cualquier elemento, comparar dos entre sí, o ayudarte con ejercicios. ¿Por dónde empezamos?' },
+    { id: 0, role: 'bot', text: 'Soy **QuimiBot**, tu asistente de química universitaria.\nPuedo explicar elementos con valores exactos, comparar propiedades con tablas, resolver ejercicios paso a paso (estequiometría, redox, equilibrio) y mucho más.\n¿Qué necesitas?' },
   ]);
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);

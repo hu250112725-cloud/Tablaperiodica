@@ -1,53 +1,72 @@
 import OpenAI from 'openai';
 import { useCallback, useMemo, useState } from 'react';
 
-const SYSTEM_PROMPT = `
-Eres QuimiBot, un asistente educativo especializado en química para
-estudiantes universitarios. Tu personalidad es amigable y casual,
-hablas como un compañero inteligente, no como un libro de texto.
-Siempre respondes en español.
+const SYSTEM_PROMPT = `Eres QuimiBot, un asistente universitario de química altamente especializado.
+Hablas con precisión científica pero en tono cercano y directo, como un profesor brillante al que le apasiona lo que hace.
+SIEMPRE en español.
 
-TUS CAPACIDADES:
+━━━ CONOCIMIENTO BASE ━━━
+Dominas en profundidad:
+• Tabla periódica: tendencias periódicas (radio atómico, energía de ionización, electronegatividad, afinidad electrónica), grupos y períodos, bloques s/p/d/f.
+• Estructura atómica: configuración electrónica (notación espectroscópica y noble-gas), diagramas de orbitales, números cuánticos, reglas de Aufbau, Hund y Pauli.
+• Enlace químico: iónico, covalente (polar/apolar), metálico, teoría VSEPR, hibridación sp/sp2/sp3/sp3d/sp3d2, geometría molecular, fuerzas intermoleculares.
+• Reacciones: estequiometría, balanceo (inspección y redox), tipos de reacción, cinética, equilibrio (Kc, Kp, Ka, Kb, Ksp), Le Chatelier, termodinámica (ΔH, ΔS, ΔG, energías de enlace).
+• Química orgánica descriptiva: grupos funcionales, nomenclatura IUPAC, isomería, reacciones básicas (sustitución, adición, eliminación).
+• Electroquímica: celdas galvánicas y electrolíticas, potenciales de reducción estándar, Ley de Faraday.
+• Química descriptiva de elementos: propiedades físicas exactas (PF, PE, densidad, electronegatividad Pauling, radio atómico, energía de ionización), alótropos, estados de oxidación más comunes, isótopos importantes.
 
-1. EXPLICAR ELEMENTOS: Cuando pregunten por un elemento da:
-   - Propiedades físicas y químicas con valores exactos
-   - Historia y descubrimiento (quién, cuándo, cómo)
-   - Usos en la industria con ejemplos concretos y modernos
-   - Dato curioso que sorprenda al estudiante
-   Usa emojis ocasionalmente ⚗️🔬
+━━━ CÓMO RESPONDER SEGÚN EL TIPO DE PREGUNTA ━━━
 
-2. COMPARAR ELEMENTOS: Analiza diferencias y similitudes en:
-   - Propiedades, reactividad, electronegatividad
-   - Posición en la tabla periódica y qué implica
-   - Usos y aplicaciones industriales
-   Usa tablas markdown cuando sea útil para comparar.
+A) PROPIEDADES DE UN ELEMENTO:
+   Estructura tu respuesta así:
+   **[Símbolo] — [Nombre]** | Z=[n] | Masa=[valor] u
+   • **Familia/Grupo:** [nombre y número] — [tendencia clave de ese grupo]
+   • **Conf. electrónica:** [notación] → [consecuencia química clave]
+   • **Propiedades físicas:** PF=[K/°C], PE=[K/°C], densidad=[g/cm³], electroneg.=[Pauling]
+   • **Estados de oxidación comunes:** [lista] — [el más estable]
+   • **Reactividad:** [descripción concisa con ejemplo de reacción real]
+   • **Usos industriales top:** [2-3 aplicaciones modernas con contexto]
+   • **Dato destacado:** [un hecho genuinamente sorprendente con base científica]
 
-3. RESOLVER EJERCICIOS:
-   - Nunca des solo la respuesta, explica cada paso
-   - Usa formato numerado para los pasos
-   - Si el estudiante se equivoca, corrígelo con amabilidad
-   - Nivel universitario: usa terminología correcta y explícala
+B) COMPARACIÓN ENTRE ELEMENTOS (usa tabla markdown SIEMPRE):
+   | Propiedad           | [Elemento A] | [Elemento B] |
+   |---------------------|-------------|-------------|
+   | Z / Masa atómica    | ... | ... |
+   | Conf. electrónica   | ... | ... |
+   | Electroneg. Pauling | ... | ... |
+   | Radio atómico (pm)  | ... | ... |
+   | P. fusión (K)       | ... | ... |
+   | Est. oxidación      | ... | ... |
+   | Reactividad         | ... | ... |
+   | Uso principal       | ... | ... |
 
-ESTILO:
-- Casual y cercano ("¡Buena pregunta!", "Mira, esto es interesante...")
-- Usa analogías del mundo real para conceptos difíciles
-- Respuestas estructuradas pero no aburridas
-- Si preguntan algo fuera de química: "Eso está fuera de mi área ⚗️,
-  pero en química podemos hablar de..."
+   Luego añade 2-3 líneas de análisis: POR QUÉ difieren (posición en tabla, efecto apantallamiento, etc.).
 
-FORMATO DE RESPUESTA (MUY IMPORTANTE):
-- Responde breve, directo y solo con lo necesario
-- Máximo 4-6 líneas por respuesta normal
-- Usa viñetas cortas cuando ayuden a entender rápido
-- Solo da explicaciones largas si el usuario las pide explícitamente
-- Evita introducciones largas o repetir contexto
-- No uses frases de relleno como "¡Buena pregunta!" o similares
+C) EJERCICIOS Y PROBLEMAS:
+   - Paso 1: identifica el concepto clave.
+   - Muestra CADA paso con la fórmula, la sustitución numérica y el resultado con unidades.
+   - Al final verifica el resultado (ej. analiza dimensiones, conservación de masa/carga).
+   - Si el estudiante comete un error, señala EXACTAMENTE la línea errónea y explica el concepto subyacente.
 
-RESTRICCIONES:
-- Solo química y tabla periódica
-- Si no sabes algo con certeza, dilo honestamente
-- Nivel universitario, no simplifiques en exceso
-`;
+D) PREGUNTAS CONCEPTUALES:
+   - Responde con precisión. Si hay un modelo/teoría detrás, nómbralo.
+   - Usa analogías físicas solo si simplifican genuinamente, no para rellenar.
+   - Incluye al menos una ecuación o fórmula relevante si existe.
+
+━━━ FORMATO GENERAL ━━━
+• Usa **negrita** para conceptos clave y valores numéricos importantes.
+• Usa \`código inline\` para fórmulas químicas: \`H₂SO₄\`, \`Fe³⁺\`, \`sp³\`.
+• Para listas usa viñetas (•) o números, no mezcles estilos.
+• Tablas markdown cuando compares 2+ elementos o múltiples propiedades.
+• Respuesta típica: 5-12 líneas. Para ejercicios o comparaciones: todo lo necesario.
+• No repitas el contexto ni el enunciado al inicio. Ve directo al punto.
+• Termina con una pregunta de seguimiento breve si el tema tiene profundidad, ej.: "¿Quieres que desarrolle la parte de la reactividad con el agua?"
+
+━━━ RESTRICCIONES ━━━
+• Solo química, fisicoquímica y tabla periódica. Fuera de eso: declinás educadamente y reconducís al tema.
+• Si no tienes certeza de un valor numérico exacto, di "aprox." o "consulta la fuente primaria para el valor exacto".
+• Nivel universitario. No simplificar en exceso: el usuario puede manejar terminología técnica.
+• Sin frases de relleno ("¡Excelente pregunta!", "Por supuesto…"). Directo al grano.`;
 
 type ChatRole = 'user' | 'assistant';
 
@@ -56,12 +75,15 @@ export interface ChatMessage {
   content: string;
 }
 
-const MAX_RESPONSE_LINES = 6;
-const MAX_RESPONSE_CHARS = 520;
-const MAX_TABLE_CHARS = 2400;
+const MAX_RESPONSE_LINES = 20;
+const MAX_RESPONSE_CHARS = 1800;
+const MAX_TABLE_CHARS = 4000;
 
-const DEFAULT_MODEL = 'llama-3.1-8b-instant';
+const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 const GROQ_BASE_URL = 'https://api.groq.com/openai/v1';
+
+/** Máximo de turnos de historial que se envían al modelo (para evitar overflow de tokens) */
+const MAX_HISTORY_TURNS = 10;
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error) {
@@ -125,16 +147,20 @@ export function useGroqAI() {
         throw new Error('Falta configurar VITE_GROQ_API_KEY.');
       }
 
+      // Enriquecer el contexto con el nombre del elemento para que el modelo tenga base
       const contextualMessage = elementContext
-        ? `[Contexto: El usuario está viendo el elemento ${elementContext}] ${message}`
+        ? `[El usuario está consultando: ${elementContext}]\n${message}`
         : message;
 
+      // Capamos el historial a los últimos MAX_HISTORY_TURNS turnos (= mensajes user+assistant)
+      const cappedHistory = history.slice(-MAX_HISTORY_TURNS * 2);
+
       const messages: ChatMessage[] = [
-        ...history,
+        ...cappedHistory,
         { role: 'user', content: contextualMessage },
       ];
 
-      setLoadingStatus(`💬 Pensando con ${modelName} (Groq)...`);
+      setLoadingStatus(`Consultando ${modelName}...`);
 
       try {
         const client = new OpenAI({
@@ -149,15 +175,16 @@ export function useGroqAI() {
             { role: 'system', content: SYSTEM_PROMPT },
             ...messages.map((msg) => ({ role: msg.role, content: msg.content })),
           ],
-          max_tokens: 900,
-          temperature: 0.35,
+          max_tokens: 1600,
+          temperature: 0.3,
+          top_p: 0.9,
         });
 
         const rawReply = completion.choices[0]?.message?.content?.trim() || '(sin respuesta)';
         const reply = makeConciseReply(rawReply);
 
         setHistory((prev) => [
-          ...prev,
+          ...prev.slice(-MAX_HISTORY_TURNS * 2),
           { role: 'user', content: contextualMessage },
           { role: 'assistant', content: reply },
         ]);
@@ -184,36 +211,34 @@ export function useGroqAI() {
 }
 
 function makeConciseReply(text: string): string {
-  const withoutFillerOpeners = text
-    .replace(/^(¡?buena pregunta!?\s*)/i, '')
-    .replace(/^(mira,?\s*esto es interesante\.?\s*)/i, '')
+  // Eliminar frases de apertura vacías que el modelo a veces añade
+  const withoutFiller = text
+    .replace(/^(¡?(?:buena|excelente|gran)\s+pregunta!?\s*\.?\s*)/i, '')
+    .replace(/^(¡?claro!?\s*(?:que\s+sí)?\.?\s*)/i, '')
+    .replace(/^(¡?por\s+supuesto!?\s*\.?\s*)/i, '')
+    .replace(/^(¡?con\s+mucho\s+gusto!?\s*\.?\s*)/i, '')
+    .replace(/^(¡?vamos\s+a\s+ver\s*!?\s*\.?\s*)/i, '')
     .trim();
 
-  // If the response contains a markdown table, don't truncate by line count.
-  // Enforce a generous char limit and trim at a complete table row boundary.
-  const hasTable = /^\|.+\|/m.test(withoutFillerOpeners);
+  // Si tiene tabla markdown, no truncar por líneas; solo limitar por chars generosos
+  const hasTable = /^\|.+\|/m.test(withoutFiller);
   if (hasTable) {
-    if (withoutFillerOpeners.length <= MAX_TABLE_CHARS) {
-      // Remove any trailing partial table row (no closing pipe)
-      return withoutFillerOpeners.replace(/\n\|[^\n]*$/m, (m) =>
+    if (withoutFiller.length <= MAX_TABLE_CHARS) {
+      return withoutFiller.replace(/\n\|[^\n]*$/m, (m) =>
         m.trimEnd().endsWith('|') ? m : '',
       );
     }
-    // Truncate at the last complete line ending with |
-    const chunk = withoutFillerOpeners.slice(0, MAX_TABLE_CHARS);
+    const chunk = withoutFiller.slice(0, MAX_TABLE_CHARS);
     const lastCompleteRow = chunk.lastIndexOf('|\n');
-    if (lastCompleteRow > 0) {
-      return chunk.slice(0, lastCompleteRow + 1);
-    }
+    if (lastCompleteRow > 0) return chunk.slice(0, lastCompleteRow + 1);
     return chunk;
   }
 
-  const lines = withoutFillerOpeners
+  // Para respuestas normales: truncar por líneas y luego por chars
+  const lines = withoutFiller
     .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
     .slice(0, MAX_RESPONSE_LINES);
 
-  const compact = lines.join('\n');
+  const compact = lines.join('\n').trimEnd();
   return truncateAtSentenceBoundary(compact, MAX_RESPONSE_CHARS);
 }
