@@ -1,13 +1,17 @@
-import { useMemo, useState } from 'react';
+import { Suspense, lazy, useMemo, useState } from 'react';
 import { ElementModal } from './components/ElementModal';
 import { FilterBar } from './components/FilterBar';
 import type { TrendKey } from './components/FilterBar';
 import { Particles } from './components/Particles';
 import { PeriodicTable } from './components/PeriodicTable';
-import { QuimiBot } from './components/QuimiBot';
 import { categoryColors } from './components/theme';
 import type { ChemicalElement, ElementCategory, MatterState } from './data/elements';
 import { elements } from './data/elements';
+
+const QuimiBot = lazy(async () => {
+  const mod = await import('./components/QuimiBot');
+  return { default: mod.QuimiBot };
+});
 
 function App() {
   const [search, setSearch] = useState('');
@@ -180,7 +184,7 @@ function App() {
         )}
 
         {/* ── Periodic Table ───────────────── */}
-        <section className="mt-4 rounded-xl border border-white/[0.06] glass p-3 md:p-5">
+        <section className="mt-4 rounded-xl border border-white/[0.06] glass p-2 md:p-5">
           <PeriodicTable
             elements={filteredElements}
             allElements={elements}
@@ -220,12 +224,14 @@ function App() {
         onAskQuimibot={(el) => { setSelectedElement(null); setQuimiBotContext(el); setQuimiBotOpen(true); }}
       />
 
-      <QuimiBot
-        open={quimiBotOpen}
-        onClose={() => { setQuimiBotOpen(false); setQuimiBotCompareContext(null); }}
-        elementContext={quimiBotContext}
-        compareContext={quimiBotCompareContext}
-      />
+      <Suspense fallback={null}>
+        <QuimiBot
+          open={quimiBotOpen}
+          onClose={() => { setQuimiBotOpen(false); setQuimiBotCompareContext(null); }}
+          elementContext={quimiBotContext}
+          compareContext={quimiBotCompareContext}
+        />
+      </Suspense>
     </div>
   );
 }

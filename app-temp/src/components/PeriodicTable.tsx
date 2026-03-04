@@ -39,8 +39,9 @@ export function PeriodicTable({
   onElementClick,
 }: PeriodicTableProps) {
   const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
-  const colSize = isMobile ? 76 : 72;
-  const rowSize = isMobile ? 82 : 78;
+  const isIPhoneLike = typeof window !== 'undefined' && window.matchMedia('(max-width: 430px)').matches;
+  const colSize = isIPhoneLike ? 62 : isMobile ? 72 : 72;
+  const rowSize = isIPhoneLike ? 70 : isMobile ? 78 : 78;
   const query = search.toLowerCase().trim();
   const isSearching = query.length > 0;
   const isCategoryFiltering = selectedCategory !== 'all';
@@ -51,7 +52,10 @@ export function PeriodicTable({
   const visibleNums = new Set(elements.map((e) => e.atomicNumber));
 
   return (
-    <div className={`overflow-x-auto ${isMobile ? 'premium-table-mobile' : ''}`}>
+    <div
+      className={`overflow-x-auto ${isMobile ? 'premium-table-mobile' : ''}`}
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <div
         className={`relative ${isMobile ? 'rounded-2xl border border-cyan-400/20 bg-slate-950/55' : ''}`}
         style={{

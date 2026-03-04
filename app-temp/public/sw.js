@@ -1,5 +1,6 @@
 const CACHE_NAME = 'tabla-periodica-v1';
-const SHELL = ['/', '/index.html'];
+const BASE_PATH = new URL('./', self.registration.scope).pathname;
+const SHELL = [BASE_PATH, `${BASE_PATH}index.html`, `${BASE_PATH}manifest.json`];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -33,7 +34,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
-      }).catch(() => caches.match('/index.html'));
+      }).catch(() => caches.match(`${BASE_PATH}index.html`));
     })
   );
 });

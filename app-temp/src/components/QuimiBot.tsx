@@ -118,6 +118,8 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
   const endRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const submitRef = useRef<((text: string) => Promise<void>) | undefined>(undefined);
+  const compareAutoSentRef = useRef<string | null>(null);
+  const submittingRef = useRef(false);
 
   // Build context labels
   const contextLabel = compareContext
@@ -139,12 +141,20 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
   useEffect(() => {
     if (!open || !compareContext) return;
     const [a, b] = compareContext;
+    const compareKey = `${a.atomicNumber}-${b.atomicNumber}`;
+    if (compareAutoSentRef.current === compareKey) return;
+    compareAutoSentRef.current = compareKey;
     const prompt = `Compara ${a.name} (${a.symbol}, nº${a.atomicNumber}) con ${b.name} (${b.symbol}, nº${b.atomicNumber}): diferencias y similitudes en propiedades, reactividad, electronegatividad y usos.`;
     let cancelled = false;
     const t = setTimeout(() => {
       if (!cancelled) submitRef.current?.(prompt);
     }, 400);
     return () => { cancelled = true; clearTimeout(t); };
+  }, [open, compareContext]);
+
+  useEffect(() => {
+    if (!open || compareContext) return;
+    compareAutoSentRef.current = null;
   }, [open, compareContext]);
 
   const addMsg = (role: UIMessage['role'], text: string) => {
@@ -163,12 +173,14 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
 
   const submit = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || loading) return;
+    if (!trimmed || loading || submittingRef.current) return;
+    submittingRef.current = true;
     addMsg('user', trimmed);
     setInput('');
 
     if (!hasApiKey) {
       addMsg('bot', 'Para activar QuimiBot, configura **VITE_GROQ_API_KEY** en `.env` con tu API key de Groq.');
+      submittingRef.current = false;
       return;
     }
 
@@ -206,6 +218,7 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
     } finally {
       setLoading(false);
       setStreamingId(null);
+      submittingRef.current = false;
     }
   };
 

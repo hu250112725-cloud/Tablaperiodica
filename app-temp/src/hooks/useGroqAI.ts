@@ -189,10 +189,38 @@ function makeConciseReply(text: string): string {
   // Para tablas: solo eliminar fila de tabla incompleta al final (sin | de cierre)
   const hasTable = /^\|.+\|/m.test(clean);
   if (hasTable) {
-    return clean.replace(/\n\|[^\n]*$/m, (m) =>
+    const tableSafe = clean.replace(/\n\|[^\n]*$/m, (m) =>
       m.trimEnd().endsWith('|') ? m : '',
     );
+    return dedupeReply(tableSafe);
   }
 
-  return clean;
+  return dedupeReply(clean);
+}
+
+function dedupeReply(text: string): string {
+  const normalized = text.trim();
+  if (!normalized) return normalized;
+
+  const half = Math.floor(normalized.length / 2);
+  if (
+    normalized.length % 2 === 0 &&
+    normalized.slice(0, half).trim() === normalized.slice(half).trim()
+  ) {
+    return normalized.slice(0, half).trim();
+  }
+
+  const blocks = normalized
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+
+  const compact: string[] = [];
+  for (const block of blocks) {
+    if (compact[compact.length - 1] !== block) {
+      compact.push(block);
+    }
+  }
+
+  return compact.join('\n\n').trim();
 }
