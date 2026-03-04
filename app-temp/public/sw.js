@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tabla-periodica-v1';
+const CACHE_NAME = 'tabla-periodica-v3';
 const BASE_PATH = new URL('./', self.registration.scope).pathname;
 const SHELL = [BASE_PATH, `${BASE_PATH}index.html`, `${BASE_PATH}manifest.json`];
 

@@ -4,7 +4,7 @@ import type { FormEvent, KeyboardEvent } from 'react';
 import type { ChemicalElement } from '../data/elements';
 import { useGroqAI } from '../hooks/useGroqAI';
 
-const INITIAL_MSG = { id: 0, role: 'bot' as const, text: 'Soy **QuimiBot**, tu asistente de química universitaria.\nPuedo explicar elementos con valores exactos, comparar propiedades con tablas, resolver ejercicios paso a paso (estequiometría, redox, equilibrio) y mucho más.\n¿Qué necesitas?' };
+const INITIAL_MSG = { id: 0, role: 'bot' as const, text: '__system__Puedo ayudarte con:\n- Propiedades de elementos y compuestos\n- Estructura atómica y enlace químico\n- Reacciones químicas y estequiometría\n- Equilibrio químico y constantes de equilibrio (Kc, Kp, Ka, Kb, Ksp)\n- Cinética y termodinámica química\n- Electroquímica\n- Química orgánica descriptiva\nTambién puedo resolver ejercicios y problemas de química paso a paso, y proporcionar explicaciones conceptuales sobre diferentes temas de la química. ¿Hay algo específico en lo que necesitas ayuda?' };
 
 interface QuimiBotProps {
   open: boolean;
@@ -363,6 +363,26 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
             <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
               {visibleMessages.map((msg) => {
                 const isStreaming = msg.role === 'bot' && msg.id === streamingId;
+                const isSystemMsg = msg.role === 'bot' && msg.text.startsWith('__system__');
+
+                // Render system/initial message as a distinct info panel (not a chat bubble)
+                if (isSystemMsg) {
+                  const lines = msg.text.replace('__system__', '').trim().split('\n');
+                  return (
+                    <motion.div key={msg.id}
+                      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}
+                      className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs text-slate-500">
+                      <p className="mb-2 font-medium text-slate-400">⚗️ QuimiBot · Asistente de química universitaria</p>
+                      {lines.map((line, i) => {
+                        const ulMatch = line.match(/^[-•]\s+(.+)$/);
+                        return ulMatch
+                          ? <p key={i} className="pl-3 before:mr-1.5 before:content-['·']">{ulMatch[1]}</p>
+                          : line.trim() ? <p key={i}>{line}</p> : null;
+                      })}
+                    </motion.div>
+                  );
+                }
+
                 return (
                   <motion.div key={msg.id}
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}

@@ -19,7 +19,9 @@ FORMATO:
 - Responde todo lo necesario para que la respuesta sea completa. No cortes listas a medias.
 - Si no tienes certeza de un valor exacto, escribe "aprox." antes del número.
 
-RESTRICCIÓN: Solo química y tabla periódica. Nivel universitario.`;
+RESTRICCIÓN: Solo química y tabla periódica. Nivel universitario.
+
+IMPORTANTE DE FORMATO: NUNCA empieces tu respuesta con saludos como "Bienvenido", "Hola", "¡Hola!", "Hey", ni ninguna frase de presentación. El sistema ya mostró el mensaje inicial al usuario. Responde DIRECTAMENTE a la pregunta o tema planteado.`;
 
 type ChatRole = 'user' | 'assistant';
 
