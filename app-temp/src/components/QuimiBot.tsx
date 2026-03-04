@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent, KeyboardEvent } from 'react';
 import type { ChemicalElement } from '../data/elements';
 import { useGroqAI } from '../hooks/useGroqAI';
@@ -20,6 +20,44 @@ interface UIMessage {
 }
 
 let msgCounter = 0;
+
+function normalizeBotText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/\*\*|\*|`|_/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[¡!¿?.,;:()\[\]{}"']/g, '')
+    .trim();
+}
+
+function dedupeConsecutiveBotMessages(list: UIMessage[]): UIMessage[] {
+  if (list.length < 2) return list;
+  const output: UIMessage[] = [];
+
+  for (const msg of list) {
+    const prev = output[output.length - 1];
+    if (!prev || prev.role !== 'bot' || msg.role !== 'bot') {
+      output.push(msg);
+      continue;
+    }
+
+    const prevNorm = normalizeBotText(prev.text);
+    const currNorm = normalizeBotText(msg.text);
+    const looksDuplicate =
+      prevNorm === currNorm ||
+      (prevNorm.length > 20 && currNorm.includes(prevNorm)) ||
+      (currNorm.length > 20 && prevNorm.includes(currNorm));
+
+    if (!looksDuplicate) {
+      output.push(msg);
+      continue;
+    }
+
+    output[output.length - 1] = msg.text.length >= prev.text.length ? msg : prev;
+  }
+
+  return output;
+}
 
 function renderMarkdownTable(block: string): string {
   // Keep only complete rows (start AND end with |)
@@ -127,6 +165,8 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
     : elementContext
     ? `${elementContext.name} (${elementContext.symbol})`
     : undefined;
+
+  const visibleMessages = useMemo(() => dedupeConsecutiveBotMessages(messages), [messages]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
 
@@ -321,7 +361,7 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
 
             {/* Messages */}
             <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-              {messages.map((msg) => {
+              {visibleMessages.map((msg) => {
                 const isStreaming = msg.role === 'bot' && msg.id === streamingId;
                 return (
                   <motion.div key={msg.id}
