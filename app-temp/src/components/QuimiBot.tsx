@@ -19,8 +19,6 @@ interface UIMessage {
   text: string;
 }
 
-let msgCounter = 0;
-
 function normalizeBotText(text: string): string {
   return text
     .toLowerCase()
@@ -30,30 +28,45 @@ function normalizeBotText(text: string): string {
     .trim();
 }
 
-function dedupeConsecutiveBotMessages(list: UIMessage[]): UIMessage[] {
+function dedupeMessages(list: UIMessage[]): UIMessage[] {
   if (list.length < 2) return list;
   const output: UIMessage[] = [];
+  // Track all bot texts seen so far (normalized) → original msg
+  const seenBotTexts = new Map<string, UIMessage>();
 
   for (const msg of list) {
-    const prev = output[output.length - 1];
-    if (!prev || prev.role !== 'bot' || msg.role !== 'bot') {
+    if (msg.role !== 'bot') {
       output.push(msg);
       continue;
     }
 
-    const prevNorm = normalizeBotText(prev.text);
-    const currNorm = normalizeBotText(msg.text);
-    const looksDuplicate =
-      prevNorm === currNorm ||
-      (prevNorm.length > 20 && currNorm.includes(prevNorm)) ||
-      (currNorm.length > 20 && prevNorm.includes(currNorm));
+    const norm = normalizeBotText(msg.text);
+    if (!norm) { output.push(msg); continue; }
 
-    if (!looksDuplicate) {
-      output.push(msg);
-      continue;
+    // Check against every previously seen bot message
+    let duplicate = false;
+    for (const [seenNorm, seenMsg] of seenBotTexts) {
+      if (
+        seenNorm === norm ||
+        (norm.length > 30 && seenNorm.includes(norm)) ||
+        (seenNorm.length > 30 && norm.includes(seenNorm))
+      ) {
+        // Keep the longer version in place
+        if (msg.text.length > seenMsg.text.length) {
+          const idx = output.indexOf(seenMsg);
+          if (idx !== -1) output[idx] = msg;
+          seenBotTexts.delete(seenNorm);
+          seenBotTexts.set(norm, msg);
+        }
+        duplicate = true;
+        break;
+      }
     }
 
-    output[output.length - 1] = msg.text.length >= prev.text.length ? msg : prev;
+    if (!duplicate) {
+      output.push(msg);
+      seenBotTexts.set(norm, msg);
+    }
   }
 
   return output;
@@ -158,6 +171,7 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
   const submitRef = useRef<((text: string) => Promise<void>) | undefined>(undefined);
   const compareAutoSentRef = useRef<string | null>(null);
   const submittingRef = useRef(false);
+  const msgCounterRef = useRef(0);
 
   // Build context labels
   const contextLabel = compareContext
@@ -166,7 +180,7 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
     ? `${elementContext.name} (${elementContext.symbol})`
     : undefined;
 
-  const visibleMessages = useMemo(() => dedupeConsecutiveBotMessages(messages), [messages]);
+  const visibleMessages = useMemo(() => dedupeMessages(messages), [messages]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
 
@@ -198,13 +212,14 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
   }, [open, compareContext]);
 
   const addMsg = (role: UIMessage['role'], text: string) => {
-    msgCounter += 1;
-    setMessages((p) => [...p, { id: msgCounter, role, text }]);
+    msgCounterRef.current += 1;
+    const id = msgCounterRef.current;
+    setMessages((p) => [...p, { id, role, text }]);
   };
 
   const handleReset = () => {
     clearHistory();
-    msgCounter = 0;
+    msgCounterRef.current = 0;
     setMessages([INITIAL_MSG]);
     setInput('');
     setLoading(false);
@@ -225,8 +240,8 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
     }
 
     // Create the bot streaming placeholder
-    msgCounter += 1;
-    const botId = msgCounter;
+    msgCounterRef.current += 1;
+    const botId = msgCounterRef.current;
     setMessages((p) => [...p, { id: botId, role: 'bot', text: '' }]);
     setStreamingId(botId);
     setLoading(true);
