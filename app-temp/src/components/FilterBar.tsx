@@ -23,6 +23,9 @@ interface FilterBarProps {
   onStateChange: (state: MatterState | 'all') => void;
   onToggleCompare: () => void;
   onTrendChange: (trend: TrendKey) => void;
+  onOpenCalc: () => void;
+  onOpenBalancer: () => void;
+  onOpenChart: () => void;
 }
 
 const stateOptions: Array<{ value: MatterState | 'all'; label: string; icon: string }> = [
@@ -44,6 +47,9 @@ export function FilterBar({
   onStateChange,
   onToggleCompare,
   onTrendChange,
+  onOpenCalc,
+  onOpenBalancer,
+  onOpenChart,
 }: FilterBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const categories = Object.entries(categoryLabels) as Array<[ElementCategory, string]>;
@@ -180,6 +186,21 @@ export function FilterBar({
             </button>
           );
         })}
+      </div>
+
+      {/* ── Row 4: tools ── */}
+      <div className="flex flex-wrap items-center gap-1.5 pt-0.5 border-t border-white/[0.04]">
+        <span className="text-[10px] uppercase tracking-wider text-slate-600 mr-1">Herramientas</span>
+        {[
+          { icon: '🧮', label: 'Masa Molar', action: onOpenCalc },
+          { icon: '⚗️', label: 'Balancear Ecuación', action: onOpenBalancer },
+          { icon: '📊', label: 'Gráfica de Tendencias', action: onOpenChart },
+        ].map(({ icon, label, action }) => (
+          <button key={label} type="button" onClick={action}
+            className="flex items-center gap-1 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1 text-xs text-slate-400 transition hover:border-white/15 hover:bg-white/[0.06] hover:text-slate-200">
+            <span>{icon}</span><span>{label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

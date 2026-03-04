@@ -108,9 +108,10 @@ function PropBar({ label, value, max, unit, color }: { label: string; value: num
 export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('Propiedades');
   const [imgError, setImgError] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (element) { setActiveTab('Propiedades'); setImgError(false); }
+    if (element) { setActiveTab('Propiedades'); setImgError(false); setCopied(false); }
   }, [element?.atomicNumber]);
 
   useEffect(() => {
@@ -292,11 +293,28 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
               </div>
 
               {/* Footer */}
-              <div className="border-t border-white/[0.06] px-5 py-3">
+              <div className="border-t border-white/[0.06] px-5 py-3 flex gap-2">
                 <button type="button" onClick={() => onAskQuimibot(element)}
-                  className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.04] py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white">
+                  className="flex flex-1 items-center justify-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.04] py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white">
                   <div className="atom-loader" style={{ width: 16, height: 16 }} />
-                  Preguntar a QuimiBot sobre {element.name}
+                  Preguntar a QuimiBot
+                </button>
+                <button
+                  type="button"
+                  title="Compartir elemento"
+                  onClick={async () => {
+                    const url = `${window.location.origin}${window.location.pathname}?el=${element.atomicNumber}`;
+                    const text = `${element.name} (${element.symbol}) · #${element.atomicNumber} · Masa: ${element.atomicMass.toFixed(4)} g/mol`;
+                    if ('share' in navigator) {
+                      try { await (navigator as Navigator & { share: (d: ShareData) => Promise<void> }).share({ title: element.name, text, url }); return; } catch {/* cancelled */}
+                    }
+                    await navigator.clipboard.writeText(`${text}\n${url}`);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.04] px-4 text-sm text-slate-400 transition-all hover:bg-white/[0.08] hover:text-white"
+                >
+                  {copied ? '✓' : '🔗'}
                 </button>
               </div>
             </div>

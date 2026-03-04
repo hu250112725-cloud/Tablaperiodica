@@ -11,6 +11,7 @@ interface QuimiBotProps {
   onClose: () => void;
   elementContext?: ChemicalElement | null;
   compareContext?: [ChemicalElement, ChemicalElement] | null;
+  prefillMessage?: string | null;
 }
 
 interface UIMessage {
@@ -159,7 +160,7 @@ function useIsMobile() {
   return window.matchMedia('(max-width: 639px)').matches;
 }
 
-export function QuimiBot({ open, onClose, elementContext, compareContext }: QuimiBotProps) {
+export function QuimiBot({ open, onClose, elementContext, compareContext, prefillMessage }: QuimiBotProps) {
   const isMobile = useIsMobile();
   const { sendMessage, clearHistory, hasApiKey, loadingStatus } = useGroqAI();
   const [input, setInput] = useState('');
@@ -210,6 +211,13 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
     if (!open || compareContext) return;
     compareAutoSentRef.current = null;
   }, [open, compareContext]);
+
+  // Auto-submit prefill message (e.g., from Equation Balancer)
+  useEffect(() => {
+    if (!open || !prefillMessage) return;
+    const t = setTimeout(() => { submitRef.current?.(prefillMessage); }, 300);
+    return () => clearTimeout(t);
+  }, [open, prefillMessage]);
 
   const addMsg = (role: UIMessage['role'], text: string) => {
     msgCounterRef.current += 1;

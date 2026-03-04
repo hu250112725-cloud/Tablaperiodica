@@ -2,6 +2,9 @@ import { Suspense, lazy, useMemo, useState } from 'react';
 import { ElementModal } from './components/ElementModal';
 import { FilterBar } from './components/FilterBar';
 import type { TrendKey } from './components/FilterBar';
+import { MolarMassCalc } from './components/MolarMassCalc';
+import { EquationBalancer } from './components/EquationBalancer';
+import { TrendChart } from './components/TrendChart';
 import { Particles } from './components/Particles';
 import { PeriodicTable } from './components/PeriodicTable';
 import { categoryColors } from './components/theme';
@@ -23,7 +26,11 @@ function App() {
   const [quimiBotOpen, setQuimiBotOpen] = useState(false);
   const [quimiBotContext, setQuimiBotContext] = useState<ChemicalElement | null>(null);
   const [quimiBotCompareContext, setQuimiBotCompareContext] = useState<[ChemicalElement, ChemicalElement] | null>(null);
+  const [quimiBotPrefill, setQuimiBotPrefill] = useState<string | null>(null);
   const [selectedTrend, setSelectedTrend] = useState<TrendKey>('none');
+  const [calcOpen, setCalcOpen] = useState(false);
+  const [balancerOpen, setBalancerOpen] = useState(false);
+  const [chartOpen, setChartOpen] = useState(false);
 
   // Normalize trend values 0–1 across all elements (unknown/zero excluded from range)
   const trendMap = useMemo<Map<number, number> | undefined>(() => {
@@ -105,6 +112,9 @@ function App() {
           onStateChange={setSelectedState}
           onToggleCompare={() => { setCompareMode((p) => !p); setCompareSelected([]); }}
           onTrendChange={setSelectedTrend}
+          onOpenCalc={() => setCalcOpen(true)}
+          onOpenBalancer={() => setBalancerOpen(true)}
+          onOpenChart={() => setChartOpen(true)}
         />
 
         {/* ── Compare panel ────────────────── */}
@@ -227,11 +237,31 @@ function App() {
       <Suspense fallback={null}>
         <QuimiBot
           open={quimiBotOpen}
-          onClose={() => { setQuimiBotOpen(false); setQuimiBotCompareContext(null); }}
+          onClose={() => { setQuimiBotOpen(false); setQuimiBotCompareContext(null); setQuimiBotPrefill(null); }}
           elementContext={quimiBotContext}
           compareContext={quimiBotCompareContext}
+          prefillMessage={quimiBotPrefill}
         />
       </Suspense>
+
+      <MolarMassCalc open={calcOpen} onClose={() => setCalcOpen(false)} />
+
+      <EquationBalancer
+        open={balancerOpen}
+        onClose={() => setBalancerOpen(false)}
+        onSendToQuimibot={(text) => {
+          setQuimiBotContext(null);
+          setQuimiBotCompareContext(null);
+          setQuimiBotPrefill(text);
+          setQuimiBotOpen(true);
+        }}
+      />
+
+      <TrendChart
+        open={chartOpen}
+        onClose={() => setChartOpen(false)}
+        onElementClick={(el) => { setChartOpen(false); setSelectedElement(el); }}
+      />
     </div>
   );
 }
