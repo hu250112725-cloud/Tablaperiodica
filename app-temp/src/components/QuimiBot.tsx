@@ -279,8 +279,20 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
 
   submitRef.current = submit;
 
-  const handleSubmit = (e: FormEvent) => { e.preventDefault(); submit(input); };
-  const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(input); } };
+  const handleFormSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleSend = () => { submit(input); };
+
+  const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      submit(input);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -437,7 +449,7 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSubmit}
+            <form onSubmit={handleFormSubmit}
               className="border-t border-white/[0.07] p-3"
               style={{ paddingBottom: isMobile ? 'max(12px, env(safe-area-inset-bottom))' : undefined }}
             >
@@ -449,7 +461,10 @@ export function QuimiBot({ open, onClose, elementContext, compareContext }: Quim
                   className="flex-1 resize-none bg-transparent text-slate-200 outline-none placeholder:text-slate-600"
                   style={{ minHeight: 28, maxHeight: 100, fontSize: 16 }}
                 />
-                <button type="submit" disabled={loading || !input.trim()}
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={loading || !input.trim()}
                   className="flex-shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-all hover:bg-white/15 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
                   ↑
                 </button>
