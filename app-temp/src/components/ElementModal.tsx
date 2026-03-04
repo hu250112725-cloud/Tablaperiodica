@@ -301,18 +301,26 @@ export function ElementModal({ element, onClose, onAskQuimibot }: ElementModalPr
                 </button>
                 <button
                   type="button"
-                  title="Compartir elemento"
+                  title={copied ? '¡Copiado!' : 'Compartir elemento'}
                   onClick={async () => {
-                    const url = `${window.location.origin}${window.location.pathname}?el=${element.atomicNumber}`;
-                    const text = `${element.name} (${element.symbol}) · #${element.atomicNumber} · Masa: ${element.atomicMass.toFixed(4)} g/mol`;
-                    if ('share' in navigator) {
-                      try { await (navigator as Navigator & { share: (d: ShareData) => Promise<void> }).share({ title: element.name, text, url }); return; } catch {/* cancelled */}
+                    if (!element) return;
+                    const wikiSlug = element.name.toLowerCase().replace(/\s+/g, '_');
+                    const url = `https://es.wikipedia.org/wiki/${encodeURIComponent(wikiSlug)}`;
+                    const text = `⚛️ ${element.name} (${element.symbol}) · Z=${element.atomicNumber} · Masa: ${element.atomicMass.toFixed(4)} g/mol`;
+                    const shareData: ShareData = { title: `${element.name} — Tabla Periódica`, text, url };
+                    if (typeof navigator.share === 'function') {
+                      try { await navigator.share(shareData); return; } catch { /* user cancelled */ }
                     }
-                    await navigator.clipboard.writeText(`${text}\n${url}`);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
+                    try {
+                      await navigator.clipboard.writeText(`${text}\n${url}`);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2200);
+                    } catch {
+                      prompt('Copia este enlace:', url);
+                    }
                   }}
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.04] px-4 text-sm text-slate-400 transition-all hover:bg-white/[0.08] hover:text-white"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.04] px-4 text-sm transition-all hover:bg-white/[0.08] hover:text-white"
+                  style={{ color: copied ? '#86efac' : '#94a3b8', minWidth: 48 }}
                 >
                   {copied ? '✓' : '🔗'}
                 </button>
